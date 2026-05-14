@@ -1,14 +1,17 @@
+import os
+from dotenv import load_dotenv
 import logging
 import aiohttp
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup,KeyboardButton
-import requests
-import random
-import string
 
 
 # настройки
+load_dotenv()
+TOKEN = os.getenv("BOT_TOKEN")
+OWM_API_KEY = os.getenv("OWM_API_KEY")
+
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
