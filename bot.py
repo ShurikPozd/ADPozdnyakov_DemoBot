@@ -27,7 +27,7 @@ dp = Dispatcher(storage=storage)
 main_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="/weather"), KeyboardButton(text="/currency")],
-        [KeyboardButton(text="/help")]
+        [KeyboardButton(text="/anime"), KeyboardButton(text="/help")]
     ],
     resize_keyboard=True
 )
@@ -43,6 +43,11 @@ class CurrencyStates(StatesGroup):
     waiting_for_from_currency = State()
     waiting_for_to_currency = State()
 
+
+# Состояния для распознавателя аниме-скриншотов
+class AnimeStates(StatesGroup):
+    waiting_for_photo = State()
+
 # /start
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -51,6 +56,7 @@ async def cmd_start(message: types.Message):
         "Доступные команды:\n"
         "/weather - погода\n"
         "/currency - конвертер валют\n"
+        "/anime - распознать из какого аниме скриншот\n"
         "/help - список команд",
         reply_markup=main_kb
     )
@@ -67,7 +73,7 @@ async def weather_start(message: types.Message, state: FSMContext):
     await message.answer("Введите название города: ")
 
 @dp.message(WeatherStates.waiting_for_city)
-async def show_weather(message: types.Message, state: FSMContext):
+async def process_weather(message: types.Message, state: FSMContext):
     city = message.text.strip()
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OWM_API_KEY}&units=metric&lang=ru"
     async with aiohttp.ClientSession() as session:
@@ -119,12 +125,6 @@ def convert_currency(amount, from_cur, to_cur, rates):
     result = rub_amount / rates[to_cur]
     return round(result,2)
 
-
-# /currency
-
-# @dp.message(Command("currency"))
-# async def currency_start(message: types.Message):
-#     await message.answer("Кнопка работает!")
 
 @dp.message(Command("currency"))
 async def currency_start(message: types.Message, state: FSMContext):
@@ -179,6 +179,77 @@ async def process_to_currency(message: types.Message, state: FSMContext):
     await message.answer(f"{amount} {from_cur} = {result} {to_cur}\n (по курсу ЦБ РФ)")
     await state.clear()
     
+
+@dp.message(Command("anime"))
+async def anime_start(message: types.Message, state: FSMContext):
+    await state.set_state(AnimeStates.waiting_for_photo)
+    await message.answer("Отправьте скриншот из аниме, попробую распознать.")
+
+
+@dp.message(AnimeStates.waiting_for_photo)
+async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bot):
+    if not message.photo:
+        await message.answer("Отправьте изображение.")
+        return
+    photo = message.photo[-1]
+    file = await bot.get_file(photo.file_id)
+    file_bytes = await bot.download_file(file.file_path)
+
+    url = "https://api.trace.moe/search"
+    async with aiohttp.ClientSession() as session:
+        form = aiohttp.FormData()
+        form.add_field('image', file_bytes, filename='anime.jpg', content_type='image/jpeg')
+
+        try:
+            async with session.post(url, data=form, timeout=15) as response:
+                if response.status != 200:
+                    await message.answer("Сервис временно недоступен. Попробуйте позже.")
+                    await state.clear()
+                    return
+                data = await response.json()
+                if not data.get("result"):
+                    await message.answer("Не удалось распознать. Попробуйте другой скриншот.")
+                    await state.clear()
+                    return
+                
+                best = data["result"][0]
+                similarity = best["similarity"] * 100
+                title = (
+                    best.get("filename") or
+                    best.get("anime") or
+                    best.get("title") or 
+                    "Неизвестное аниме"
+                )
+
+                episode = best.get("episode")
+                from_time = best.get("from")
+                to_time = best.get("to")
+
+                def format_time(seconds):
+                    if seconds is None:
+                        return "?"
+                    mins = int(seconds // 60)
+                    secs = int(seconds % 60)
+                    return f"{mins:02d}:{secs:02d}"
+                
+                time_str = f"{format_time(from_time)} - {format_time(to_time)}" if from_time and to_time else "Неизвестно"
+
+                answer = (
+                    f"Название {title}\n"
+                    f"Схожесть {similarity:.2f}%\n"
+                    f"Эпизод: {episode if episode else 'неизвестен'}\n"
+                    f"Тайм-код: {time_str}"
+                )
+                await message.answer(answer, parse_mode="Markdown")
+
+        except aiohttp.ClientError as e:
+            await message.answer(f"Ошибка сети: {type(e).__name__}. Попробуйте позже.")
+        except Exception as e:
+            await message.answer(f"Неизвестная ошибка: {type(e).__name__}.")
+        finally:
+            await state.clear()
+
+
 
 # Запуск
 async def main():
