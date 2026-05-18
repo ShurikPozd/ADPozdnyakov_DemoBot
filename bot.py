@@ -2,7 +2,7 @@ import asyncio
 import logging
 from aiogram import Bot, Dispatcher
 from config import TOKEN
-from handlers import start_help, weather, currency, anime, translate, shorten
+from handlers import start_help, weather, currency, anime, translate, shorten, quote
 
 
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +16,7 @@ dp.include_router(currency.router)
 dp.include_router(anime.router)
 dp.include_router(translate.router)
 dp.include_router(shorten.router)
+dp.include_router(quote.router)
 
 
 async def main():

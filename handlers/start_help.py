@@ -12,9 +12,12 @@ async def cmd_start(message: types.Message):
     await message.answer(
         "Здравствуйте! Это демонстрационный бот А.Д. Позднякова.\n"
         "Доступные команды:\n"
-        "/weather - погода\n"
-        "/currency - конвертер валют\n"
+        "/weather - узнать погоду\n"
+        "/currency - конвертировать валюту\n"
         "/anime - распознать аниме по скриншоту\n"
+        "/translate - перевести текст\n"
+        "/shorten - сократить ссылку\n"
+        "/quote - случайная цитата\n"
         "/cancel - отменить диалог\n"
         "/help - список команд",
         reply_markup=main_kb
