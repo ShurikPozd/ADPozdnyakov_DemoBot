@@ -18,6 +18,13 @@ async def cmd_start(message: types.Message):
         "/translate - перевести текст\n"
         "/shorten - сократить ссылку\n"
         "/quote - случайная цитата\n"
+        "/dice - бросить кости\n"
+        "/coin - подбросить монету\n"
+        "/guess - угадать число\n"
+        "/cat - случайный котик\n"
+        "/dog - случайная собачка\n"
+        "/joke - случайная шутка\n"
+        "/fact - случайный факт\n"
         "/cancel - отменить диалог\n"
         "/help - список команд",
         reply_markup=main_kb
