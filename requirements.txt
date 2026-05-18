@@ -2,3 +2,5 @@ aiohttp
 aiogram
 python-dotenv
 googletrans
+qrcode
+pillow
