@@ -15,6 +15,7 @@ async def cmd_start(message: types.Message):
         "/weather - погода\n"
         "/currency - конвертер валют\n"
         "/anime - распознать аниме по скриншоту\n"
+        "/cancel - отменить диалог\n"
         "/help - список команд",
         reply_markup=main_kb
     )
