@@ -1,0 +1,3 @@
+# Для парсера цитат
+requests
+beautifulsoup4
