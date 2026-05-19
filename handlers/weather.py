@@ -3,24 +3,24 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from services.weather_api import get_weather
-
+import logging
 
 router = Router()
-
+logger = logging.getLogger(__name__)
 
 class WeatherStates(StatesGroup):
     waiting_for_city = State()
 
-
 @router.message(Command("weather"))
 async def weather_start(message: types.Message, state: FSMContext):
+    logger.info(f"User {message.from_user.id} started weather command")
     await state.set_state(WeatherStates.waiting_for_city)
     await message.answer("Введите название города: ")
-
 
 @router.message(WeatherStates.waiting_for_city)
 async def process_weather(message: types.Message, state: FSMContext):
     city = message.text.strip()
+    logger.debug(f"User {message.from_user.id} requested weather for city: {city}")
     data = await get_weather(city)
     if data:
         temp = data['main']['temp']
@@ -34,6 +34,8 @@ async def process_weather(message: types.Message, state: FSMContext):
                   f"Ветер: {wind} м/с\n"
                   f"{desc}")
         await message.answer(answer)
+        logger.info(f"Weather for {city} sent to user {message.from_user.id}")
     else:
+        logger.warning(f"Weather not found for city: {city}, user {message.from_user.id}")
         await message.answer(f"Город '{city.capitalize()}' не найден.")
     await state.clear()

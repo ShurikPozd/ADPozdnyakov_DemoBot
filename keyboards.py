@@ -1,6 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-
 main_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="/weather"), KeyboardButton(text="/currency")],

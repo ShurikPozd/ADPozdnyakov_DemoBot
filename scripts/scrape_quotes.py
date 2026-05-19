@@ -3,7 +3,10 @@ from bs4 import BeautifulSoup
 import json
 import time
 from pathlib import Path
+import logging
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def scrape_all_quotes():
     base_url = "http://quotes.toscrape.com/page/{}/"
@@ -11,7 +14,7 @@ def scrape_all_quotes():
     page = 1
     while True:
         url = base_url.format(page)
-        print(f"Загрузка страницы {page}...")
+        logger.info(f"Загрузка страницы {page}...")
         try:
             response = requests.get(url, timeout=10)
             if response.status_code != 200:
@@ -29,11 +32,11 @@ def scrape_all_quotes():
                     'author': author,
                     'tags': tags
                 })
-            print(f"Найдено {len(quote_blocks)} цитат")
+            logger.info(f"Найдено {len(quote_blocks)} цитат")
             page += 1
             time.sleep(0.5)
         except Exception as e:
-            print(f"Ошибка на странице {page}: {e}")
+            logger.error(f"Ошибка на странице {page}: {e}")
             break
 
     data_dir = Path(__file__).parent.parent / 'data'
@@ -41,8 +44,7 @@ def scrape_all_quotes():
     file_path = data_dir / 'quotes.json'
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(all_quotes, f, ensure_ascii=False, indent=2)
-    print(f"Готово. Сохранено {len(all_quotes)} цитат в {file_path}")
-
+    logger.info(f"Готово. Сохранено {len(all_quotes)} цитат в {file_path}")
 
 if __name__ == "__main__":
     scrape_all_quotes()
