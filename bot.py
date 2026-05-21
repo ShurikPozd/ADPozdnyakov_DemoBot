@@ -12,11 +12,25 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import ErrorEvent
 from config import TOKEN
 from handlers import start_help, weather, currency, anime, translate, shorten, quote, games, animals, jokes_facts, qr, stats
+from flask import Flask
+import threading
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+@flask_app.route('/health')
+def health():
+    return "Бот живой", 200
+
+def run_flask():
+    port = int(os.environ.get('PORT', 10000))
+    flask_app.run(host='0.0.0.0', port=port)
 
 dp.include_router(start_help.router)
 dp.include_router(weather.router)
@@ -50,6 +64,10 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
+    # Запускаем Flask в фоновом потоке
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    # Запускаем бота
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
