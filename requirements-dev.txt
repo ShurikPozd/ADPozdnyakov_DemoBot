@@ -1,3 +1,4 @@
-# Для парсера цитат
 requests
 beautifulsoup4
+pytest
+pytest-asyncio
