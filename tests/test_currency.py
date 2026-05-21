@@ -1,12 +1,6 @@
 """Unit-тесты для функции convert_currency из handlers/currency.py."""
 
 
-import sys
-from pathlib import Path
-
-# Добавляем корень проекта в путь, чтобы импортировать модули
-sys.path.insert(0,str(Path(__file__).parent.parent))
-
 from handlers.currency import convert_currency
 
 def test_convert_currency_success():
