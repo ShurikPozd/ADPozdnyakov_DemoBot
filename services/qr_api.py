@@ -3,12 +3,12 @@
 Принимает строку данных и возвращает BytesIO-объект с изображением PNG.
 """
 
-
 import qrcode
 from io import BytesIO
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 async def generate_qr_code(data: str) -> BytesIO:
     """Генерирует QR-код для переданной строки данных.
@@ -33,7 +33,7 @@ async def generate_qr_code(data: str) -> BytesIO:
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
         bio = BytesIO()
-        img.save(bio, format='PNG')
+        img.save(bio, format="PNG")
         bio.seek(0)
         logger.debug(f"QR code generated for data length {len(data)}")
         return bio

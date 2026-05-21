@@ -3,11 +3,11 @@
 Принимает длинный URL, возвращает короткую ссылку.
 """
 
-
 import aiohttp
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 async def shorten_url(long_url: str) -> str | None:
     """Сокращает переданный URL через сервис is.gd.

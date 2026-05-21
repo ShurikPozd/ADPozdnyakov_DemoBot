@@ -3,7 +3,6 @@
 Предоставляет асинхронную функцию для получения курсов (база – рубль) с кэшированием на 1 час.
 """
 
-
 import aiohttp
 import json
 import logging
@@ -17,6 +16,7 @@ _cached_rates = None
 _cache_time = None
 CACHE_TTL = 3600  # 1 час в секундах
 
+
 async def get_cbr_rates() -> dict | None:
     """Получает курсы валют от ЦБ РФ (база – RUB) с кэшированием.
 
@@ -29,7 +29,11 @@ async def get_cbr_rates() -> dict | None:
     now = time.time()
 
     # Если кэш есть и не устарел – возвращаем
-    if _cached_rates is not None and _cache_time is not None and (now - _cache_time) < CACHE_TTL:
+    if (
+        _cached_rates is not None
+        and _cache_time is not None
+        and (now - _cache_time) < CACHE_TTL
+    ):
         logger.debug("Возвращаем курсы валют из кэша")
         return _cached_rates
 
@@ -41,9 +45,9 @@ async def get_cbr_rates() -> dict | None:
                 if response.status == 200:
                     text = await response.text()
                     data = json.loads(text)
-                    rates = {'RUB': 1.0}
-                    for code, info in data['Valute'].items():
-                        rates[code] = info['Value'] / info['Nominal']
+                    rates = {"RUB": 1.0}
+                    for code, info in data["Valute"].items():
+                        rates[code] = info["Value"] / info["Nominal"]
                     # Сохраняем в кэш
                     _cached_rates = rates
                     _cache_time = now

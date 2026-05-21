@@ -1,7 +1,7 @@
 """Unit-тесты для функции format_time из utils/formatters.py."""
 
-
 from utils.formatters import format_time
+
 
 def test_format_time_with_seconds():
     """Проверяет корректное преобразование секунд в MM:SS."""
@@ -11,9 +11,11 @@ def test_format_time_with_seconds():
     assert format_time(3661) == "61:01"
     assert format_time(3599) == "59:59"
 
+
 def test_format_time_with_none():
     """Проверяет, что при None возвращается '?'."""
     assert format_time(None) == "?"
+
 
 def test_format_time_with_float():
     """Проверяет работу с числами с плавающей точкой."""

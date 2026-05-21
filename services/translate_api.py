@@ -3,11 +3,11 @@
 Переводит текст на указанный целевой язык (по умолчанию русский).
 """
 
-
 from googletrans import Translator
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 async def translate_text(text: str, target_lang: str = "ru") -> str | None:
     """Переводит текст на заданный язык.

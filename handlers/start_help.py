@@ -4,7 +4,6 @@
 отменяет активные диалоги (FSM).
 """
 
-
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -14,6 +13,7 @@ from handlers.stats import record_user, record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
+
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message) -> None:
@@ -45,13 +45,15 @@ async def cmd_start(message: types.Message) -> None:
         "/stats - статистика бота\n"
         "/cancel - отменить диалог\n"
         "/help - список команд",
-        reply_markup=main_kb
+        reply_markup=main_kb,
     )
+
 
 @router.message(Command("help"))
 async def cmd_help(message: types.Message) -> None:
     """Обрабатывает команду /help – то же самое, что /start."""
     await cmd_start(message)
+
 
 @router.message(Command("cancel"))
 async def cmd_cancel(message: types.Message, state: FSMContext) -> None:

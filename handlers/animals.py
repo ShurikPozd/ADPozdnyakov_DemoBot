@@ -3,7 +3,6 @@
 Использует TheCatAPI и Dog API.
 """
 
-
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.animals_api import get_random_cat, get_random_dog
@@ -12,6 +11,7 @@ from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
+
 
 @router.message(Command("cat"))
 async def cmd_cat(message: types.Message) -> None:
@@ -25,6 +25,7 @@ async def cmd_cat(message: types.Message) -> None:
     else:
         logger.error(f"Failed to fetch cat picture for user {message.from_user.id}")
         await message.answer("Не удалось получить картинку котика. Попробуйте позже.")
+
 
 @router.message(Command("dog"))
 async def cmd_dog(message: types.Message) -> None:

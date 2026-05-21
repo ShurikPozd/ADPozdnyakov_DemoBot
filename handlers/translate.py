@@ -3,7 +3,6 @@
 Переводит введённый текст на русский язык (автоопределение исходного языка).
 """
 
-
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.translate_api import translate_text
@@ -12,6 +11,7 @@ from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
+
 
 @router.message(Command("translate"))
 async def cmd_translate(message: types.Message) -> None:
@@ -23,12 +23,16 @@ async def cmd_translate(message: types.Message) -> None:
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
         logger.debug(f"User {message.from_user.id} used /translate without text")
-        await message.answer("Использование: /translate <текст для перевода на русский>")
+        await message.answer(
+            "Использование: /translate <текст для перевода на русский>"
+        )
         return
 
     text = args[1].strip()
     if len(text) > 500:
-        logger.warning(f"User {message.from_user.id} sent text that's too long: ({len(text)} chars)")
+        logger.warning(
+            f"User {message.from_user.id} sent text that's too long: ({len(text)} chars)"
+        )
         await message.answer("Текст слишком длинный (макс. 500 символов).")
         return
 

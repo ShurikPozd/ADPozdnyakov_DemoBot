@@ -4,7 +4,6 @@
 Логирует предупреждения/ошибки, если ключи отсутствуют.
 """
 
-
 import os
 from dotenv import load_dotenv
 import logging

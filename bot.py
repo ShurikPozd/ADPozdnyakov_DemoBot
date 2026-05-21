@@ -4,14 +4,26 @@
 Настраивает глобальную обработку ошибок и корректное завершение работы.
 """
 
-
 import asyncio
 import logging
 import logger_config
 from aiogram import Bot, Dispatcher
 from aiogram.types import ErrorEvent
 from config import TOKEN
-from handlers import start_help, weather, currency, anime, translate, shorten, quote, games, animals, jokes_facts, qr, stats
+from handlers import (
+    start_help,
+    weather,
+    currency,
+    anime,
+    translate,
+    shorten,
+    quote,
+    games,
+    animals,
+    jokes_facts,
+    qr,
+    stats,
+)
 from flask import Flask
 import threading
 import os
@@ -22,14 +34,17 @@ dp = Dispatcher()
 
 flask_app = Flask(__name__)
 
-@flask_app.route('/')
-@flask_app.route('/health')
+
+@flask_app.route("/")
+@flask_app.route("/health")
 def health():
     return "Бот живой", 200
 
+
 def run_flask():
-    port = int(os.environ.get('PORT', 10000))
-    flask_app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get("PORT", 10000))
+    flask_app.run(host="0.0.0.0", port=port)
+
 
 dp.include_router(start_help.router)
 dp.include_router(weather.router)
@@ -44,6 +59,7 @@ dp.include_router(jokes_facts.router)
 dp.include_router(qr.router)
 dp.include_router(stats.router)
 
+
 @dp.error()
 async def error_handler(event: ErrorEvent) -> None:
     """Глобальный обработчик не перехваченных исключений.
@@ -55,12 +71,16 @@ async def error_handler(event: ErrorEvent) -> None:
     """
     logger.error(f"Unhandled exception: {event.exception}", exc_info=True)
     if event.update.message:
-        await event.update.message.answer("Произошла внутренняя ошибка. Администратор уже уведомлён.")
+        await event.update.message.answer(
+            "Произошла внутренняя ошибка. Администратор уже уведомлён."
+        )
+
 
 async def main() -> None:
     """Запускает поллинг бота (опрос сервера Telegram)."""
     logger.info("Бот запущен")
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     # Запускаем Flask в фоновом потоке

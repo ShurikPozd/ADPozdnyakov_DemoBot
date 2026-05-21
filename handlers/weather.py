@@ -3,7 +3,6 @@
 Реализует FSM: запрашивает название города, затем показывает текущую погоду.
 """
 
-
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -15,9 +14,12 @@ from handlers.stats import record_command
 router = Router()
 logger = logging.getLogger(__name__)
 
+
 class WeatherStates(StatesGroup):
     """Состояния FSM для диалога погоды."""
+
     waiting_for_city = State()
+
 
 @router.message(Command("weather"))
 async def weather_start(message: types.Message, state: FSMContext) -> None:
@@ -31,6 +33,7 @@ async def weather_start(message: types.Message, state: FSMContext) -> None:
     await state.set_state(WeatherStates.waiting_for_city)
     await message.answer("Введите название города: ")
 
+
 @router.message(WeatherStates.waiting_for_city)
 async def process_weather(message: types.Message, state: FSMContext) -> None:
     """Обрабатывает ввод города, получает данные о погоде и отправляет результат.
@@ -43,20 +46,24 @@ async def process_weather(message: types.Message, state: FSMContext) -> None:
     logger.debug(f"User {message.from_user.id} requested weather for city: {city}")
     data = await get_weather(city)
     if data:
-        temp = data['main']['temp']
-        feels_like = data ['main']['feels_like']
-        humidity = data['main']['humidity']
-        wind = data['wind']['speed']
-        desc = data['weather'][0]['description'].capitalize()
-        answer = (f"Погода в городе {city.capitalize()}:\n"
-                  f"Температура: {temp}°C (ощущается как {feels_like}°C)\n"
-                  f"Влажность: {humidity}%\n"
-                  f"Ветер: {wind} м/с\n"
-                  f"{desc}")
+        temp = data["main"]["temp"]
+        feels_like = data["main"]["feels_like"]
+        humidity = data["main"]["humidity"]
+        wind = data["wind"]["speed"]
+        desc = data["weather"][0]["description"].capitalize()
+        answer = (
+            f"Погода в городе {city.capitalize()}:\n"
+            f"Температура: {temp}°C (ощущается как {feels_like}°C)\n"
+            f"Влажность: {humidity}%\n"
+            f"Ветер: {wind} м/с\n"
+            f"{desc}"
+        )
         await message.answer(answer)
         logger.info(f"Weather for {city} sent to user {message.from_user.id}")
         record_command(message.from_user.id, "/weather")
     else:
-        logger.warning(f"Weather not found for city: {city}, user {message.from_user.id}")
+        logger.warning(
+            f"Weather not found for city: {city}, user {message.from_user.id}"
+        )
         await message.answer(f"Город '{city.capitalize()}' не найден.")
     await state.clear()

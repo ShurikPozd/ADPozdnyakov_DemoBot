@@ -4,11 +4,11 @@
 и Dog API (https://dog.ceo) для собачек.
 """
 
-
 import aiohttp
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 async def get_random_cat() -> str | None:
     """Возвращает URL случайного изображения кота.
@@ -22,8 +22,8 @@ async def get_random_cat() -> str | None:
             async with session.get(url, timeout=10) as response:
                 if response.status == 200:
                     data = await response.json()
-                    if data and isinstance(data, list) and 'url' in data[0]:
-                        url_cat = data[0]['url']
+                    if data and isinstance(data, list) and "url" in data[0]:
+                        url_cat = data[0]["url"]
                         logger.debug("Cat picture URL fetched")
                         return url_cat
                     else:
@@ -35,6 +35,7 @@ async def get_random_cat() -> str | None:
         except Exception as e:
             logger.exception(f"Unexpected error in get_random_cat: {e}")
         return None
+
 
 async def get_random_dog() -> str | None:
     """Возвращает URL случайного изображения собаки.
@@ -48,12 +49,14 @@ async def get_random_dog() -> str | None:
             async with session.get(url, timeout=10) as response:
                 if response.status == 200:
                     data = await response.json()
-                    if data.get('status') == 'success' and 'message' in data:
-                        url_dog = data['message']
+                    if data.get("status") == "success" and "message" in data:
+                        url_dog = data["message"]
                         logger.debug("Dog picture URL fetched")
                         return url_dog
                     else:
-                        logger.warning(f"Dog API returned error status: {data.get('status')}")
+                        logger.warning(
+                            f"Dog API returned error status: {data.get('status')}"
+                        )
                 else:
                     logger.warning(f"Dog API returned status {response.status}")
     except aiohttp.ClientError as e:

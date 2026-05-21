@@ -3,7 +3,6 @@
 Принимает текст или ссылку, генерирует QR-код и отправляет изображение.
 """
 
-
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.qr_api import generate_qr_code
@@ -12,6 +11,7 @@ from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
+
 
 @router.message(Command("qr"))
 async def cmd_qr(message: types.Message) -> None:
@@ -27,7 +27,9 @@ async def cmd_qr(message: types.Message) -> None:
         return
     text = args[1].strip()
     if len(text) > 500:
-        logger.warning(f"User {message.from_user.id} sent QR data that's too long: ({len(text)} chars)")
+        logger.warning(
+            f"User {message.from_user.id} sent QR data that's too long: ({len(text)} chars)"
+        )
         await message.answer("Текст слишком длинный (макс. 500 символов).")
         return
     try:
