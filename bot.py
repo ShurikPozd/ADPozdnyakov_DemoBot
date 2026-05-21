@@ -6,7 +6,7 @@
 
 import asyncio
 import logging
-import logger_config
+import logger_config  # noqa: F401
 from aiogram import Bot, Dispatcher
 from aiogram.types import ErrorEvent
 from config import TOKEN

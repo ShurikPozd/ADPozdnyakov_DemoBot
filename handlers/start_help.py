@@ -9,7 +9,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from keyboards import main_kb
 import logging
-from handlers.stats import record_user, record_command
+from handlers.stats import record_user
 
 router = Router()
 logger = logging.getLogger(__name__)

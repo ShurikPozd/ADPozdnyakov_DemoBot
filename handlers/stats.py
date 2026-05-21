@@ -114,7 +114,6 @@ init_db()
 @router.message(Command("stats"))
 async def cmd_stats(message: types.Message) -> None:
     """Отправляет пользователю статистику бота."""
-    user_id = message.from_user.id
     stats = get_stats()
     text = (
         f"Статистика бота\n"

@@ -37,6 +37,6 @@ async def generate_qr_code(data: str) -> BytesIO:
         bio.seek(0)
         logger.debug(f"QR code generated for data length {len(data)}")
         return bio
-    except Exception as e:
+    except Exception:
         logger.exception(f"Failed to generate QR code for data: {data[:50]}")
         raise  # пробросим исключение выше, где оно будет обработано в хендлере
