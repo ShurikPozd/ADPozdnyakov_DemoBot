@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from services.cbr_api import get_cbr_rates
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -76,4 +77,5 @@ async def process_to_currency(message: types.Message, state: FSMContext):
     result = convert_currency(amount, from_cur, to_cur, rates)
     await message.answer(f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)")
     logger.info(f"User {message.from_user.id} conversion result: {amount} {from_cur} = {result} {to_cur}")
+    record_command(message.from_user.id, "/currency")
     await state.clear()

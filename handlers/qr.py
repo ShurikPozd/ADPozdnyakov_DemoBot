@@ -2,6 +2,7 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from services.qr_api import generate_qr_code
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ async def cmd_qr(message: types.Message):
         photo_file = types.BufferedInputFile(qr_io.getvalue(), filename="qr.png")
         await message.answer_photo(photo_file, caption=f"QR-код для:\n{text}")
         logger.debug(f"QR code sent to user {message.from_user.id}")
+        record_command(message.from_user.id, "/qr")
     except Exception as e:
         logger.exception(f"QR generation failed for user {message.from_user.id}: {e}")
         await message.answer(f"Ошибка генерации QR-кода: {e}")

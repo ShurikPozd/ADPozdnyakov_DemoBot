@@ -4,6 +4,7 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from pathlib import Path
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -33,4 +34,5 @@ def get_random_quote() -> str:
 @router.message(Command("quote"))
 async def cmd_quote(message: types.Message):
     logger.info(f"User {message.from_user.id} requested a quote")
+    record_command(message.from_user.id, "/quote")
     await message.answer(get_random_quote(), parse_mode="Markdown")

@@ -3,6 +3,7 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from services.translate_api import translate_text
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ async def cmd_translate(message: types.Message):
     if translated:
         await message.answer(f"Перевод:\n{translated}")
         logger.info(f"Translation sent to user {message.from_user.id}")
+        record_command(message.from_user.id, "/translate")
     else:
         logger.error(f"Translation failed for user {message.from_user.id}")
         await message.answer("Не удалось перевести. Попробуйте позже.")

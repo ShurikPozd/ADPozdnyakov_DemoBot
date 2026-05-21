@@ -4,7 +4,7 @@ import logger_config
 from aiogram import Bot, Dispatcher
 from aiogram.types import ErrorEvent
 from config import TOKEN
-from handlers import start_help, weather, currency, anime, translate, shorten, quote, games, animals, jokes_facts, qr
+from handlers import start_help, weather, currency, anime, translate, shorten, quote, games, animals, jokes_facts, qr, stats
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ dp.include_router(games.router)
 dp.include_router(animals.router)
 dp.include_router(jokes_facts.router)
 dp.include_router(qr.router)
+dp.include_router(stats.router)
 
 @dp.error()
 async def error_handler(event: ErrorEvent):

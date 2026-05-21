@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from services.trace_api import search_anime
 from utils.formatters import format_time
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bo
         f"Эпизод: {episode if episode else 'неизвестен'}\n"
         f"Таймкод: {time_str}"
     )
-    await message.answer(answer, parse_mode="Markdown")
+    await message.answer(answer)
     logger.info(f"Anime recognized for user {message.from_user.id}: {title} (similarity {similarity:.2f}%)")
+    record_command(message.from_user.id, "/anime")
     await state.clear()

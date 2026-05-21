@@ -4,6 +4,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -16,12 +17,14 @@ async def cmd_dice(message: types.Message):
     value = random.randint(1,6)
     logger.info(f"User {message.from_user.id} rolled dice: {value}")
     await message.answer(f"Выпало: {value}")
+    record_command(message.from_user.id, "/dice")
 
 @router.message(Command("coin"))
 async def cmd_coin(message: types.Message):
     result = random.choice(["Орёл", "Решка"])
     logger.info(f"User {message.from_user.id} flipped coin: {result}")
     await message.answer(f"Выпало: {result}")
+    record_command(message.from_user.id, "/coin")
 
 @router.message(Command("guess"))
 async def cmd_guess_start(message: types.Message, state: FSMContext):
@@ -48,6 +51,7 @@ async def process_guess(message: types.Message, state: FSMContext):
     if guess == target:
         await message.answer(f"Верно! Число {target} угадано за {attempts} попыток.")
         logger.info(f"User {message.from_user.id} won the guess game in {attempts} attempts")
+        record_command(message.from_user.id, "/guess")
         await state.clear()
     elif guess < target:
         await message.answer("Загаданное число больше. Попробуйте ещё раз")

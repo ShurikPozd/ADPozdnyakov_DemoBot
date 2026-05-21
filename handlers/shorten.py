@@ -2,6 +2,7 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from services.shorten_api import shorten_url
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ async def cmd_shorten(message: types.Message):
     if short:
         await message.answer(f"Короткая ссылка: {short}")
         logger.info(f"Shortened URL for user {message.from_user.id}: {short}")
+        record_command(message.from_user.id, "/shorten")
     else:
         logger.error(f"Shortening failed for user {message.from_user.id}, URL: {long_url}")
         await message.answer("Ошибка при сокращении. Проверьте ссылку и попробуйте снова.")

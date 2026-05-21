@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from services.weather_api import get_weather
 import logging
+from handlers.stats import record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ async def process_weather(message: types.Message, state: FSMContext):
                   f"{desc}")
         await message.answer(answer)
         logger.info(f"Weather for {city} sent to user {message.from_user.id}")
+        record_command(message.from_user.id, "/weather")
     else:
         logger.warning(f"Weather not found for city: {city}, user {message.from_user.id}")
         await message.answer(f"Город '{city.capitalize()}' не найден.")

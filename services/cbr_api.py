@@ -1,10 +1,26 @@
 import aiohttp
 import json
 import logging
+import time
+from datetime import datetime
 
-logger = logging.getLogger(__name__)   
+logger = logging.getLogger(__name__)
+
+# Кэш: храним курсы и время последнего обновления
+_cached_rates = None
+_cache_time = None
+CACHE_TTL = 3600  # 1 час в секундах
 
 async def get_cbr_rates():
+    global _cached_rates, _cache_time
+    now = time.time()
+
+    # Если кэш есть и не устарел – возвращаем
+    if _cached_rates is not None and _cache_time is not None and (now - _cache_time) < CACHE_TTL:
+        logger.debug("Возвращаем курсы валют из кэша")
+        return _cached_rates
+
+    # Иначе загружаем новые курсы
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
     try:
         async with aiohttp.ClientSession() as session:
@@ -15,7 +31,10 @@ async def get_cbr_rates():
                     rates = {'RUB': 1.0}
                     for code, info in data['Valute'].items():
                         rates[code] = info['Value'] / info['Nominal']
-                    logger.debug("CBR rates fetched successfully")
+                    # Сохраняем в кэш
+                    _cached_rates = rates
+                    _cache_time = now
+                    logger.info("Курсы валют обновлены и закэшированы")
                     return rates
                 else:
                     logger.warning(f"CBR API returned status {response.status}")

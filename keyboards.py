@@ -9,7 +9,7 @@ main_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text="/guess"), KeyboardButton(text="/cat")],
         [KeyboardButton(text="/dog"), KeyboardButton(text="/joke")],
         [KeyboardButton(text="/fact"), KeyboardButton(text="/qr")],
-        [KeyboardButton(text="/cancel"), KeyboardButton(text="/help")]
+        [KeyboardButton(text="/stats"), KeyboardButton(text="/cancel"), KeyboardButton(text="/help")]
     ],
     resize_keyboard=True
 )

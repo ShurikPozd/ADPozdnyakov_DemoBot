@@ -3,12 +3,14 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from keyboards import main_kb
 import logging
+from handlers.stats import record_user, record_command
 
 router = Router()
 logger = logging.getLogger(__name__)
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
+    record_user(message.from_user.id)
     logger.info(f"User {message.from_user.id} started the bot")
     await message.answer(
         "Здравствуйте! Это демонстрационный бот А.Д. Позднякова.\n"
@@ -26,6 +28,7 @@ async def cmd_start(message: types.Message):
         "/dog - случайная собачка\n"
         "/joke - случайная шутка\n"
         "/fact - случайный факт\n"
+        "/stats - статистика бота\n"
         "/cancel - отменить диалог\n"
         "/help - список команд",
         reply_markup=main_kb
