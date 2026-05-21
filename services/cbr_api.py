@@ -1,3 +1,9 @@
+"""Клиент для получения курсов валют Центрального банка России (ЦБ РФ).
+
+Предоставляет асинхронную функцию для получения курсов (база – рубль) с кэшированием на 1 час.
+"""
+
+
 import aiohttp
 import json
 import logging
@@ -11,7 +17,14 @@ _cached_rates = None
 _cache_time = None
 CACHE_TTL = 3600  # 1 час в секундах
 
-async def get_cbr_rates():
+async def get_cbr_rates() -> dict | None:
+    """Получает курсы валют от ЦБ РФ (база – RUB) с кэшированием.
+
+    Returns:
+        dict: Сопоставление кода валюты (например, 'USD') с её курсом относительно 1 единицы.
+              Пример: {'RUB': 1.0, 'USD': 91.5, ...}
+        None: При ошибке сети или JSON.
+    """
     global _cached_rates, _cache_time
     now = time.time()
 

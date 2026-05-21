@@ -1,3 +1,9 @@
+"""Команды для получения случайных изображений животных: котики (/cat) и собачки (/dog).
+
+Использует TheCatAPI и Dog API.
+"""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.animals_api import get_random_cat, get_random_dog
@@ -8,7 +14,8 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 @router.message(Command("cat"))
-async def cmd_cat(message: types.Message):
+async def cmd_cat(message: types.Message) -> None:
+    """Отправляет случайное изображение котика."""
     logger.info(f"User {message.from_user.id} requested a cat picture")
     url = await get_random_cat()
     if url:
@@ -20,7 +27,8 @@ async def cmd_cat(message: types.Message):
         await message.answer("Не удалось получить картинку котика. Попробуйте позже.")
 
 @router.message(Command("dog"))
-async def cmd_dog(message: types.Message):
+async def cmd_dog(message: types.Message) -> None:
+    """Отправляет случайное изображение собачки."""
     logger.info(f"User {message.from_user.id} requested a dog picture")
     url = await get_random_dog()
     if url:

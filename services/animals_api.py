@@ -1,9 +1,21 @@
+"""Сервис для получения случайных изображений животных.
+
+Использует TheCatAPI (https://thecatapi.com) для котиков
+и Dog API (https://dog.ceo) для собачек.
+"""
+
+
 import aiohttp
 import logging
 
 logger = logging.getLogger(__name__)
 
 async def get_random_cat() -> str | None:
+    """Возвращает URL случайного изображения кота.
+
+    Returns:
+        str | None: URL картинки или None при ошибке/отсутствии результата.
+    """
     url = "https://api.thecatapi.com/v1/images/search"
     async with aiohttp.ClientSession() as session:
         try:
@@ -25,6 +37,11 @@ async def get_random_cat() -> str | None:
         return None
 
 async def get_random_dog() -> str | None:
+    """Возвращает URL случайного изображения собаки.
+
+    Returns:
+        str | None: URL картинки или None при ошибке/отсутствии результата.
+    """
     url = "https://dog.ceo/api/breeds/image/random"
     try:
         async with aiohttp.ClientSession() as session:

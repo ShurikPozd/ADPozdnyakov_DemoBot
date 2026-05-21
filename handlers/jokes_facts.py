@@ -1,3 +1,9 @@
+"""Команды для получения случайных шуток (/joke) и интересных фактов (/fact).
+
+Использует JokeAPI и Useless Facts API.
+"""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.jokes_facts_api import get_random_joke, get_random_fact
@@ -8,7 +14,8 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 @router.message(Command("joke"))
-async def cmd_joke(message: types.Message):
+async def cmd_joke(message: types.Message) -> None:
+    """Отправляет случайную шутку."""
     logger.info(f"User {message.from_user.id} requested a joke")
     joke = await get_random_joke()
     if joke:
@@ -20,7 +27,8 @@ async def cmd_joke(message: types.Message):
         await message.answer("Не удалось получить шутку. Попробуйте позже.")
 
 @router.message(Command("fact"))
-async def cmd_fact(message: types.Message):
+async def cmd_fact(message: types.Message) -> None:
+    """Отправляет случайный интересный факт."""
     logger.info(f"User {message.from_user.id} requested a fact")
     fact = await get_random_fact()
     if fact:

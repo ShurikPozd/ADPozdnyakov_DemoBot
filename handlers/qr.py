@@ -1,3 +1,9 @@
+"""Генератор QR-кодов (/qr).
+
+Принимает текст или ссылку, генерирует QR-код и отправляет изображение.
+"""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.qr_api import generate_qr_code
@@ -8,7 +14,12 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 @router.message(Command("qr"))
-async def cmd_qr(message: types.Message):
+async def cmd_qr(message: types.Message) -> None:
+    """Генерирует QR-код для введённого текста/ссылки и отправляет изображение.
+
+    Args:
+        message: Входящее сообщение.
+    """
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
         logger.debug(f"User {message.from_user.id} used /qr without text")

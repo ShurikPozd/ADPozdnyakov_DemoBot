@@ -1,3 +1,10 @@
+"""Обработчик команды распознавания аниме по скриншоту (/anime).
+
+Использует trace.moe API. Пользователь отправляет фото, бот возвращает название аниме,
+номер эпизода, таймкод и точность совпадения.
+"""
+
+
 from aiogram import Router, types, Bot
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -11,16 +18,30 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 class AnimeStates(StatesGroup):
+    """Состояние FSM для ожидания фото."""
     waiting_for_photo = State()
 
 @router.message(Command("anime"))
-async def anime_start(message: types.Message, state: FSMContext):
+async def anime_start(message: types.Message, state: FSMContext) -> None:
+    """Начинает диалог распознавания аниме, просит отправить фото.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM.
+    """
     logging.debug(f"User {message.from_user.id} started anime recognition")
     await state.set_state(AnimeStates.waiting_for_photo)
     await message.answer("Отправьте скриншот из аниме, попробую распознать.")
 
 @router.message(AnimeStates.waiting_for_photo)
-async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bot):
+async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bot) -> None:
+    """Обрабатывает полученное фото, отправляет запрос в trace.moe и возвращает результат.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM (очищается после ответа).
+        bot: Экземпляр бота для скачивания файла.
+    """
     if not message.photo:
         logger.debug(f"User {message.from_user.id} sent message without photo")
         await message.answer("Отправьте изображение.")

@@ -1,3 +1,9 @@
+"""Настройка системы логирования для бота.
+
+Создаёт папку logs/, настраивает корневой логгер с выводом в консоль и файл (ротация 10 МБ, 5 бэкапов).
+"""
+
+
 import logging
 import logging.handlers
 from pathlib import Path
@@ -7,7 +13,12 @@ LOG_DIR = Path(__file__).parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
 # Настройка корневого логгера (будет использоваться aiogram и всеми модулями)
-def setup_root_logger():
+def setup_root_logger() -> logging.Logger:
+    """Настраивает корневой логгер: консоль + файл с ротацией.
+
+    Returns:
+        logging.Logger: Настроенный корневой логгер.
+    """
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
 

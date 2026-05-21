@@ -1,3 +1,10 @@
+"""Обработчик команды конвертации валют (/currency).
+
+Использует курсы ЦБ РФ (с кэшированием) и FSM для последовательного ввода суммы,
+исходной и целевой валюты.
+"""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -10,11 +17,23 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 class CurrencyStates(StatesGroup):
+    """Состояния FSM для конвертации валют."""
     waiting_for_amount = State()
     waiting_for_from_currency = State()
     waiting_for_to_currency = State()
 
-def convert_currency(amount, from_cur, to_cur, rates):
+def convert_currency(amount: float, from_cur: str, to_cur: str, rates: dict) -> float | None:
+    """Конвертирует сумму из одной валюты в другую на основе курсов.
+
+    Args:
+        amount: Сумма в исходной валюте.
+        from_cur: Код исходной валюты (например, 'USD').
+        to_cur: Код целевой валюты (например, 'EUR').
+        rates: Словарь курсов (база — рубль).
+
+    Returns:
+        float: Сконвертированная сумма, округлённая до 2 знаков, или None, если валюта не найдена.
+    """
     if from_cur not in rates or to_cur not in rates:
         return None
     rub_amount = amount * rates[from_cur]
@@ -22,13 +41,25 @@ def convert_currency(amount, from_cur, to_cur, rates):
     return round(result, 2)
 
 @router.message(Command("currency"))
-async def currency_start(message: types.Message, state: FSMContext):
+async def currency_start(message: types.Message, state: FSMContext) -> None:
+    """Начинает диалог конвертации, запрашивает сумму.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM.
+    """
     logger.info(f"User {message.from_user.id} started currency conversion")
     await state.set_state(CurrencyStates.waiting_for_amount)
     await message.answer("Введите сумму: ")
 
 @router.message(CurrencyStates.waiting_for_amount)
-async def process_amount(message: types.Message, state: FSMContext):
+async def process_amount(message: types.Message, state: FSMContext) -> None:
+    """Обрабатывает ввод суммы, переходит к запросу исходной валюты.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM.
+    """
     try:
         amount = float(message.text.strip())
         await state.update_data(amount=amount)
@@ -40,7 +71,13 @@ async def process_amount(message: types.Message, state: FSMContext):
         await message.answer("Ошибка: введите число. Попробуйте ещё раз.")
 
 @router.message(CurrencyStates.waiting_for_from_currency)
-async def process_from_currency(message: types.Message, state: FSMContext):
+async def process_from_currency(message: types.Message, state: FSMContext) -> None:
+    """Обрабатывает ввод исходной валюты, переходит к запросу целевой валюты.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM.
+    """
     from_cur = message.text.strip().upper()
     await state.update_data(from_cur=from_cur)
     await state.set_state(CurrencyStates.waiting_for_to_currency)
@@ -48,7 +85,13 @@ async def process_from_currency(message: types.Message, state: FSMContext):
     await message.answer("Введите целевую валюту (например, USD, EUR, RUB): ")
 
 @router.message(CurrencyStates.waiting_for_to_currency)
-async def process_to_currency(message: types.Message, state: FSMContext):
+async def process_to_currency(message: types.Message, state: FSMContext) -> None:
+    """Обрабатывает ввод целевой валюты, выполняет конвертацию и отправляет результат.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM (очищается после ответа).
+    """
     to_cur = message.text.strip().upper()
     user_data = await state.get_data()
     amount = user_data['amount']

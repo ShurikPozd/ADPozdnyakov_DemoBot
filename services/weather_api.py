@@ -1,10 +1,24 @@
+"""Сервис погоды с использованием OpenWeatherMap API.
+
+Принимает название города, возвращает словарь с данными о погоде.
+"""
+
+
 import aiohttp
 from config import OWM_API_KEY
 import logging
 
 logger = logging.getLogger(__name__)
 
-async def get_weather(city: str):
+async def get_weather(city: str) -> dict | None:
+    """Получает текущую погоду для указанного города.
+
+    Args:
+        city: Название города (на английском или русском, но рекомендуется английский).
+
+    Returns:
+        dict | None: Словарь с данными о погоде (main, wind, weather, etc.) или None при ошибке.
+    """
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OWM_API_KEY}&units=metric&lang=ru"
     try:
         async with aiohttp.ClientSession() as session:

@@ -1,3 +1,9 @@
+"""Генератор QR-кодов с использованием библиотеки qrcode.
+
+Принимает строку данных и возвращает BytesIO-объект с изображением PNG.
+"""
+
+
 import qrcode
 from io import BytesIO
 import logging
@@ -5,6 +11,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 async def generate_qr_code(data: str) -> BytesIO:
+    """Генерирует QR-код для переданной строки данных.
+
+    Args:
+        data: Текст или ссылка для кодирования.
+
+    Returns:
+        BytesIO: Поток байтов с изображением QR-кода в формате PNG.
+
+    Raises:
+        Exception: Любая ошибка при генерации QR-кода (пробрасывается выше).
+    """
     try:
         qr = qrcode.QRCode(
             version=1,

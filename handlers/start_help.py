@@ -1,3 +1,10 @@
+"""Обработчики команд /start, /help и /cancel.
+
+Регистрирует пользователя при /start, выводит описание бота,
+отменяет активные диалоги (FSM).
+"""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -9,7 +16,14 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 @router.message(Command("start"))
-async def cmd_start(message: types.Message):
+async def cmd_start(message: types.Message) -> None:
+    """Обрабатывает команду /start.
+
+    Записывает пользователя в статистику, отправляет приветствие с клавиатурой.
+
+    Args:
+        message: Входящее сообщение.
+    """
     record_user(message.from_user.id)
     logger.info(f"User {message.from_user.id} started the bot")
     await message.answer(
@@ -35,11 +49,20 @@ async def cmd_start(message: types.Message):
     )
 
 @router.message(Command("help"))
-async def cmd_help(message: types.Message):
+async def cmd_help(message: types.Message) -> None:
+    """Обрабатывает команду /help – то же самое, что /start."""
     await cmd_start(message)
 
 @router.message(Command("cancel"))
-async def cmd_cancel(message: types.Message, state: FSMContext):
+async def cmd_cancel(message: types.Message, state: FSMContext) -> None:
+    """Отменяет любой активный диалог FSM.
+
+    Сбрасывает состояние и уведомляет пользователя.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM, который нужно очистить.
+    """
     current_state = await state.get_state()
     if current_state is None:
         logger.debug(f"User {message.from_user.id} tried to cancel but no active state")

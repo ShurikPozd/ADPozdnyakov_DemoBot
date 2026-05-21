@@ -1,3 +1,10 @@
+"""Главная точка входа Telegram-бота.
+
+Инициализирует и запускает бота со всеми зарегистрированными обработчиками.
+Настраивает глобальную обработку ошибок и корректное завершение работы.
+"""
+
+
 import asyncio
 import logging
 import logger_config
@@ -25,12 +32,20 @@ dp.include_router(qr.router)
 dp.include_router(stats.router)
 
 @dp.error()
-async def error_handler(event: ErrorEvent):
+async def error_handler(event: ErrorEvent) -> None:
+    """Глобальный обработчик не перехваченных исключений.
+
+    Логирует ошибку и отправляет пользователю общее сообщение (если возможно).
+
+    Args:
+        event: Объект ErrorEvent, содержащий исключение и данные обновления.
+    """
     logger.error(f"Unhandled exception: {event.exception}", exc_info=True)
     if event.update.message:
         await event.update.message.answer("Произошла внутренняя ошибка. Администратор уже уведомлён.")
 
-async def main():
+async def main() -> None:
+    """Запускает поллинг бота (опрос сервера Telegram)."""
     logger.info("Бот запущен")
     await dp.start_polling(bot)
 

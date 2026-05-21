@@ -1,3 +1,6 @@
+"""Сокращение ссылок (/shorten) через сервис is.gd."""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.shorten_api import shorten_url
@@ -8,7 +11,12 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 @router.message(Command("shorten"))
-async def cmd_shorten(message: types.Message):
+async def cmd_shorten(message: types.Message) -> None:
+    """Сокращает переданную ссылку и возвращает короткую версию.
+
+    Args:
+        message: Входящее сообщение.
+    """
     args = message.text.split(maxsplit=1)
     if len(args) <2:
         logger.debug(f"User {message.from_user.id} used /shorten without URL")

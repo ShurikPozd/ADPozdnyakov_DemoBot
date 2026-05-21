@@ -1,3 +1,8 @@
+"""Игровые команды: бросить кости (/dice), подбросить монету (/coin),
+и угадать число (/guess) с FSM.
+"""
+
+
 import random
 from aiogram import Router, types
 from aiogram.filters import Command
@@ -10,24 +15,33 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 class GuessGame(StatesGroup):
+    """Состояние FSM для игры 'Угадай число'."""
     waiting_for_number = State()
 
 @router.message(Command("dice"))
-async def cmd_dice(message: types.Message):
+async def cmd_dice(message: types.Message) -> None:
+    """Генерирует случайное число от 1 до 6 (бросок кубика)."""
     value = random.randint(1,6)
     logger.info(f"User {message.from_user.id} rolled dice: {value}")
     await message.answer(f"Выпало: {value}")
     record_command(message.from_user.id, "/dice")
 
 @router.message(Command("coin"))
-async def cmd_coin(message: types.Message):
+async def cmd_coin(message: types.Message) -> None:
+    """Подбрасывает монетку (орёл или решка)."""
     result = random.choice(["Орёл", "Решка"])
     logger.info(f"User {message.from_user.id} flipped coin: {result}")
     await message.answer(f"Выпало: {result}")
     record_command(message.from_user.id, "/coin")
 
 @router.message(Command("guess"))
-async def cmd_guess_start(message: types.Message, state: FSMContext):
+async def cmd_guess_start(message: types.Message, state: FSMContext) -> None:
+    """Начинает игру 'Угадай число', загадывает число от 1 до 10.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM.
+    """
     number = random.randint(1,10)
     await state.update_data(target=number, attempts=0)
     await state.set_state(GuessGame.waiting_for_number)
@@ -35,7 +49,13 @@ async def cmd_guess_start(message: types.Message, state: FSMContext):
     await message.answer("Загадано число от 1 до 10. Попробуйте угадать.")
 
 @router.message(GuessGame.waiting_for_number)
-async def process_guess(message: types.Message, state: FSMContext):
+async def process_guess(message: types.Message, state: FSMContext) -> None:
+    """Обрабатывает попытку угадать число, даёт подсказки и завершает игру при правильном ответе.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM.
+    """
     try:
         guess = int(message.text.strip())
     except ValueError:

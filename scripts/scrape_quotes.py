@@ -1,3 +1,10 @@
+"""Парсер цитат с сайта quotes.toscrape.com.
+
+Собирает цитаты со всех страниц, авторов и теги, сохраняет результат в data/quotes.json.
+Запускается отдельно, не является частью бота.
+"""
+
+
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -5,10 +12,12 @@ import time
 from pathlib import Path
 import logging
 
+# Настройка логирования для скрипта
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def scrape_all_quotes():
+def scrape_all_quotes() -> None:
+    """Основная функция парсинга: обходит все страницы сайта и сохраняет цитаты в JSON."""
     base_url = "http://quotes.toscrape.com/page/{}/"
     all_quotes = []
     page = 1
@@ -18,10 +27,12 @@ def scrape_all_quotes():
         try:
             response = requests.get(url, timeout=10)
             if response.status_code != 200:
+                logger.warning(f"Страница {page} вернула статус {response.status_code}, прекращаем.")
                 break
             soup = BeautifulSoup(response.text, 'html.parser')
             quote_blocks = soup.find_all('div', class_='quote')
             if not quote_blocks:
+                logger.info(f"На странице {page} нет цитат, прекращаем.")
                 break
             for block in quote_blocks:
                 text = block.find('span', class_='text').text
@@ -32,13 +43,14 @@ def scrape_all_quotes():
                     'author': author,
                     'tags': tags
                 })
-            logger.info(f"Найдено {len(quote_blocks)} цитат")
+            logger.info(f"Страница {page}: найдено {len(quote_blocks)} цитат")
             page += 1
-            time.sleep(0.5)
+            time.sleep(0.5) # вежливость к серверу
         except Exception as e:
             logger.error(f"Ошибка на странице {page}: {e}")
             break
 
+    # Сохраняем в файл
     data_dir = Path(__file__).parent.parent / 'data'
     data_dir.mkdir(exist_ok=True)
     file_path = data_dir / 'quotes.json'

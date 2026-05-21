@@ -1,9 +1,24 @@
+"""Сервис для распознавания аниме по изображению через trace.moe.
+
+Принимает байты изображения, отправляет POST-запрос к API и возвращает лучшее совпадение.
+"""
+
+
 import aiohttp
 import logging
 
 logger = logging.getLogger(__name__)
 
-async def search_anime(file_bytes: bytes):
+async def search_anime(file_bytes: bytes) -> dict | None:
+    """Отправляет изображение в trace.moe и возвращает результат.
+
+    Args:
+        file_bytes: Байты изображения (JPEG, PNG и т.д.).
+
+    Returns:
+        dict | None: Словарь с наилучшим совпадением (поля similarity, filename, episode, from, to и др.)
+                     или None при ошибке/отсутствии совпадений.
+    """
     url = "https://api.trace.moe/search"
     try:
         async with aiohttp.ClientSession() as session:

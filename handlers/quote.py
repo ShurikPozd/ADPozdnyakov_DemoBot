@@ -1,3 +1,9 @@
+"""Случайная цитата (/quote).
+
+Цитаты загружаются из JSON-файла, собранного парсером (quotes.toscrape.com).
+"""
+
+
 import json
 import random
 from aiogram import Router, types
@@ -10,6 +16,11 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 def get_random_quote() -> str:
+    """Загружает список цитат из quotes.json и возвращает случайную.
+
+    Returns:
+        str: Отформатированная цитата (текст, автор, теги) или сообщение об ошибке.
+    """
     quotes_file = Path(__file__).parent.parent / 'data' / 'quotes.json'
     try:
         with open(quotes_file, 'r', encoding='utf-8') as f:
@@ -32,7 +43,8 @@ def get_random_quote() -> str:
     return result
 
 @router.message(Command("quote"))
-async def cmd_quote(message: types.Message):
+async def cmd_quote(message: types.Message) -> None:
+    """Отправляет случайную цитату."""
     logger.info(f"User {message.from_user.id} requested a quote")
     record_command(message.from_user.id, "/quote")
     await message.answer(get_random_quote(), parse_mode="Markdown")

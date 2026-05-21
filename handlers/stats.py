@@ -1,3 +1,10 @@
+"""Модуль статистики бота: сбор пользователей и команд, команда /stats.
+
+Использует SQLite для хранения данных. Предоставляет функции для записи пользователей и команд,
+а также получения агрегированной статистики.
+"""
+
+
 import sqlite3
 from pathlib import Path
 from aiogram import Router, types
@@ -10,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 DB_PATH = Path(__file__).parent.parent / "data" / "stats.db"
 
-def init_db():
+def init_db() -> None:
+    """Создаёт таблицы users и commands, если они ещё не существуют."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -33,7 +41,12 @@ def init_db():
     conn.commit()
     conn.close()
 
-def record_user(user_id: int):
+def record_user(user_id: int) -> None:
+    """Записывает или обновляет время последнего визита пользователя.
+
+    Args:
+        user_id: ID пользователя Telegram.
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     now = datetime.now().isoformat()
@@ -46,7 +59,13 @@ def record_user(user_id: int):
     conn.commit()
     conn.close()
 
-def record_command(user_id: int, command: str):
+def record_command(user_id: int, command: str) -> None:
+    """Записывает факт выполнения команды.
+
+    Args:
+        user_id: ID пользователя Telegram.
+        command: Название команды (например, '/weather').
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     now = datetime.now().isoformat()
@@ -55,7 +74,12 @@ def record_command(user_id: int, command: str):
     conn.commit()
     conn.close()
 
-def get_stats():
+def get_stats() -> dict:
+    """Возвращает общую статистику: количество пользователей, команд и топ-5 команд.
+
+    Returns:
+        dict: С ключами 'total_users', 'total_commands', 'top_commands' (список кортежей (команда, количество)).
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM users")
@@ -77,7 +101,8 @@ def get_stats():
 init_db()
 
 @router.message(Command("stats"))
-async def cmd_stats(message: types.Message):
+async def cmd_stats(message: types.Message) -> None:
+    """Отправляет пользователю статистику бота."""
     user_id = message.from_user.id
     stats = get_stats()
     text = (

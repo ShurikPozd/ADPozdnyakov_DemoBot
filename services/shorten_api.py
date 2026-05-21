@@ -1,9 +1,23 @@
+"""Сервис для сокращения ссылок через is.gd.
+
+Принимает длинный URL, возвращает короткую ссылку.
+"""
+
+
 import aiohttp
 import logging
 
 logger = logging.getLogger(__name__)
 
 async def shorten_url(long_url: str) -> str | None:
+    """Сокращает переданный URL через сервис is.gd.
+
+    Args:
+        long_url: Исходный полный URL (должен начинаться с http:// или https://).
+
+    Returns:
+        str | None: Короткая ссылка (например, https://is.gd/abc123) или None при ошибке.
+    """
     url = f"https://is.gd/create.php?format=simple&url={long_url}"
     try:
         async with aiohttp.ClientSession() as session:

@@ -1,9 +1,21 @@
+"""Сервис для получения случайных шуток и интересных фактов.
+
+Использует JokeAPI (https://v2.jokeapi.dev) для шуток
+и Useless Facts API (https://uselessfacts.jsph.pl) для фактов.
+"""
+
+
 import aiohttp
 import logging
 
 logger = logging.getLogger(__name__)
 
 async def get_random_joke() -> str | None:
+    """Возвращает случайную шутку (текст).
+
+    Returns:
+        str | None: Текст шутки или None при ошибке.
+    """
     url = "https://v2.jokeapi.dev/joke/Any?safe-mode&type=single"
     try:
         async with aiohttp.ClientSession() as session:
@@ -24,6 +36,11 @@ async def get_random_joke() -> str | None:
     return None
 
 async def get_random_fact() -> str | None:
+    """Возвращает случайный интересный факт (текст).
+
+    Returns:
+        str | None: Текст факта или None при ошибке.
+    """
     url = "https://uselessfacts.jsph.pl/api/v2/facts/random?language=en"
     try:
         async with aiohttp.ClientSession() as session:

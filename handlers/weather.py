@@ -1,3 +1,9 @@
+"""Обработчик команды погоды (/weather) с использованием OpenWeatherMap API.
+
+Реализует FSM: запрашивает название города, затем показывает текущую погоду.
+"""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -10,16 +16,29 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 class WeatherStates(StatesGroup):
+    """Состояния FSM для диалога погоды."""
     waiting_for_city = State()
 
 @router.message(Command("weather"))
-async def weather_start(message: types.Message, state: FSMContext):
+async def weather_start(message: types.Message, state: FSMContext) -> None:
+    """Начинает диалог погоды, запрашивает название города.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM.
+    """
     logger.info(f"User {message.from_user.id} started weather command")
     await state.set_state(WeatherStates.waiting_for_city)
     await message.answer("Введите название города: ")
 
 @router.message(WeatherStates.waiting_for_city)
-async def process_weather(message: types.Message, state: FSMContext):
+async def process_weather(message: types.Message, state: FSMContext) -> None:
+    """Обрабатывает ввод города, получает данные о погоде и отправляет результат.
+
+    Args:
+        message: Входящее сообщение.
+        state: Контекст FSM (очищается после ответа).
+    """
     city = message.text.strip()
     logger.debug(f"User {message.from_user.id} requested weather for city: {city}")
     data = await get_weather(city)

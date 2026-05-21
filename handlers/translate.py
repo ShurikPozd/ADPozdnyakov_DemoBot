@@ -1,4 +1,9 @@
-# handlers/translate.py
+"""Перевод текста (/translate) с использованием googletrans.
+
+Переводит введённый текст на русский язык (автоопределение исходного языка).
+"""
+
+
 from aiogram import Router, types
 from aiogram.filters import Command
 from services.translate_api import translate_text
@@ -9,7 +14,12 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 @router.message(Command("translate"))
-async def cmd_translate(message: types.Message):
+async def cmd_translate(message: types.Message) -> None:
+    """Переводит текст, введённый после команды, на русский язык.
+
+    Args:
+        message: Входящее сообщение.
+    """
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
         logger.debug(f"User {message.from_user.id} used /translate without text")

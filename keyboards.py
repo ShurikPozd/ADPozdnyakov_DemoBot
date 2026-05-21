@@ -1,3 +1,9 @@
+"""Клавиатуры для Telegram-бота.
+
+Определяет основную клавиатуру с кнопками для быстрого доступа к командам.
+"""
+
+
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 main_kb = ReplyKeyboardMarkup(
