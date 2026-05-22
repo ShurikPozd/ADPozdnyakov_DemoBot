@@ -23,7 +23,7 @@ from handlers import (
     jokes_facts,
     qr,
     stats,
-    about
+    about,
 )
 from flask import Flask
 import threading

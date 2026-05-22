@@ -1,6 +1,5 @@
 """Обработчик команды /about – информация о боте."""
 
-
 from aiogram import Router, types
 from aiogram.filters import Command
 import logging
@@ -8,6 +7,7 @@ from handlers.stats import get_stats
 
 router = Router()
 logger = logging.getLogger(__name__)
+
 
 @router.message(Command("about"))
 async def cmd_about(message: types.Message) -> None:
