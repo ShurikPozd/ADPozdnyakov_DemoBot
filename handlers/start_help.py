@@ -27,8 +27,9 @@ async def cmd_start(message: types.Message) -> None:
     record_user(message.from_user.id)
     logger.info(f"User {message.from_user.id} started the bot")
     await message.answer(
-        "Здравствуйте! Это демонстрационный бот А.Д. Позднякова.\n"
-        "Доступные команды:\n"
+        "Здравствуйте!\n"
+        "Это демонстрационный бот А.Д. Позднякова.\n\n"
+        "Доступные команды:\n\n"
         "/weather - узнать погоду\n"
         "/currency - конвертировать валюту\n"
         "/translate - перевести текст\n"
@@ -37,17 +38,17 @@ async def cmd_start(message: types.Message) -> None:
         "/qr - превратить текст/ссылку в QR-код\n"
         "/dice - бросить кости\n"
         "/coin - подбросить монету\n"
-        "/guess - угадать число\n"
+        "/guess - игра \"угадай число\"\n"
         "/quote - случайная цитата\n"
         "/cat - случайный котик\n"
         "/dog - случайная собачка\n"
         "/fact - случайный факт\n"
         "/joke - случайная шутка\n"
         "/stats - статистика бота\n"
-        "/about - (!) информация о боте (!)\n"
-        "/cancel - отменить диалог\n"
-        "/help - список команд",
-        reply_markup=main_kb,
+        "/cancel - отменить диалог\n\n"
+        "/help - список команд\n\n"
+        "/about - информация о боте",
+        reply_markup=main_kb
     )
 
 

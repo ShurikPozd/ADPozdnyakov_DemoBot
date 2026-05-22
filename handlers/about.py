@@ -27,4 +27,4 @@ async def cmd_about(message: types.Message) -> None:
         "Исходный код: [GitHub](https://github.com/ShurikPozd/ADPozdnyakov_DemoBot)\n"
         "По всем вопросам: @ShurikPozd"
     )
-    await message.answer(text, disable_web_page_preview=True)
+    await message.answer(text, parse_mode="Markdown", disable_web_page_preview=True)
