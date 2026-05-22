@@ -40,7 +40,8 @@ async def anime_start(message: types.Message, state: FSMContext) -> None:
         "- На скриншоте не должно быть субтитров/прочих надписей отсутствующих в оригинале;\n"
         "- Таковы условия сервиса trace.moe для более точного распознавания.\n\n"
         "_Распознавание не всегда является 100% верным_",
-        parse_mode="Markdown", reply_markup=get_cancel_kb(),
+        parse_mode="Markdown",
+        reply_markup=get_cancel_kb(),
     )
 
 
