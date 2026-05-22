@@ -38,7 +38,7 @@ async def cmd_start(message: types.Message) -> None:
         "/qr - превратить текст/ссылку в QR-код\n"
         "/dice - бросить кости\n"
         "/coin - подбросить монету\n"
-        "/guess - игра \"угадай число\"\n"
+        '/guess - игра "угадай число"\n'
         "/quote - случайная цитата\n"
         "/cat - случайный котик\n"
         "/dog - случайная собачка\n"
@@ -48,7 +48,7 @@ async def cmd_start(message: types.Message) -> None:
         "/cancel - отменить диалог\n\n"
         "/help - список команд\n\n"
         "/about - информация о боте",
-        reply_markup=main_kb
+        reply_markup=main_kb,
     )
 
 
