@@ -1,4 +1,6 @@
-# 🤖 ADPozdnyakov DemoBot
+# 🤖 ADPozdnyakov_DemoBot
+
+> 🚀 **Попробовать бота:** [@ADPozdnyakov_DemoBot](https://t.me/ADPozdnyakov_DemoBot)
 
 Многофункциональный Telegram-бот, демонстрирующий широкий спектр возможностей Python-разработки: асинхронность, работа с API, кэширование, FSM (машина состояний), базы данных (SQLite), логирование, тестирование, CI/CD, контейнеризация (Docker) и парсинг веб-страниц.
 
@@ -134,12 +136,12 @@ python scripts/scrape_quotes.py
 
 Для предотвращения "засыпания" бота на бесплатном тарифном плане Render используется **Flask healthcheck** (эндпоинты `/` и `/health`). Рекомендуется настроить внешний мониторинг, например, **UptimeRobot** (бесплатно до 50 мониторов), который будет пинговать `https://ваш-сервис.onrender.com/health` каждые 5 минут. Это гарантирует, что сервис останется активным.
 
-## 🤝 Лицензия
-
-MIT © [Alexander Pozdnyakov](https://github.com/ShurikPozd)
+## 📄 Лицензия
+Этот проект распространяется под лицензией **MIT**. Подробности смотрите в файле [LICENSE](LICENSE).
 
 ## 📬 Контакты
 
+- **Попробовать бота:** [@ADPozdnyakov_DemoBot](https://t.me/ADPozdnyakov_DemoBot)
 - GitHub: [ShurikPozd](https://github.com/ShurikPozd)
 - Telegram: [@ShurikPozd](https://t.me/ShurikPozd)
 - По вопросам и предложениям – пишите.
