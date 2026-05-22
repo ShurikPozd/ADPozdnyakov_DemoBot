@@ -69,19 +69,26 @@ async def process_amount(message: types.Message, state: FSMContext) -> None:
     """
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     try:
         amount = float(message.text.strip())
         await state.update_data(amount=amount)
         await state.set_state(CurrencyStates.waiting_for_from_currency)
         logger.debug(f"User {message.from_user.id} entered amount: {amount}")
-        await message.answer("Введите исходную валюту (например, USD, EUR, RUB): ", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Введите исходную валюту (например, USD, EUR, RUB): ",
+            reply_markup=get_cancel_kb(),
+        )
     except ValueError:
         logger.warning(
             f"User {message.from_user.id} entered invalid amount: {message.text}"
         )
-        await message.answer("Ошибка: введите число. Попробуйте ещё раз.", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Ошибка: введите число. Попробуйте ещё раз.", reply_markup=get_cancel_kb()
+        )
 
 
 @router.message(CurrencyStates.waiting_for_from_currency)
@@ -94,13 +101,18 @@ async def process_from_currency(message: types.Message, state: FSMContext) -> No
     """
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     from_cur = message.text.strip().upper()
     await state.update_data(from_cur=from_cur)
     await state.set_state(CurrencyStates.waiting_for_to_currency)
     logger.debug(f"User {message.from_user.id} entered from_currency: {from_cur}")
-    await message.answer("Введите целевую валюту (например, USD, EUR, RUB): ", reply_markup=get_cancel_kb())
+    await message.answer(
+        "Введите целевую валюту (например, USD, EUR, RUB): ",
+        reply_markup=get_cancel_kb(),
+    )
 
 
 @router.message(CurrencyStates.waiting_for_to_currency)
@@ -113,7 +125,9 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
     """
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     to_cur = message.text.strip().upper()
     user_data = await state.get_data()
@@ -136,7 +150,8 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
             f"User {message.from_user.id}: from_currency {from_cur} not found in rates"
         )
         await message.answer(
-            f"Валюта {from_cur} не найдена. Доступны: RUB, USD, EUR и др.", reply_markup=main_kb
+            f"Валюта {from_cur} не найдена. Доступны: RUB, USD, EUR и др.",
+            reply_markup=main_kb,
         )
         await state.clear()
         return
@@ -145,13 +160,17 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
             f"User {message.from_user.id}: to_currency {to_cur} not found in rates"
         )
         await message.answer(
-            f"Валюта {to_cur} не найдена. Доступны: RUB, USD, EUR и др.", reply_markup=main_kb
+            f"Валюта {to_cur} не найдена. Доступны: RUB, USD, EUR и др.",
+            reply_markup=main_kb,
         )
         await state.clear()
         return
 
     result = convert_currency(amount, from_cur, to_cur, rates)
-    await message.answer(f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)", reply_markup=main_kb)
+    await message.answer(
+        f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)",
+        reply_markup=main_kb,
+    )
     logger.info(
         f"User {message.from_user.id} conversion result: {amount} {from_cur} = {result} {to_cur}"
     )

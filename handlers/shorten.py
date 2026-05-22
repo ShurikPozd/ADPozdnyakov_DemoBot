@@ -25,7 +25,10 @@ async def shorten_start(message: types.Message, state: FSMContext) -> None:
     """Начинает диалог сокращения ссылки, запрашивает URL."""
     logger.info(f"Пользователь {message.from_user.id} отправил команду /shorten")
     await state.set_state(ShortenStates.waiting_for_url)
-    await message.answer("Отправьте ссылку (должна начинаться с http:// или https://).", reply_markup=get_cancel_kb())
+    await message.answer(
+        "Отправьте ссылку (должна начинаться с http:// или https://).",
+        reply_markup=get_cancel_kb(),
+    )
 
 
 @router.message(ShortenStates.waiting_for_url)
@@ -33,12 +36,15 @@ async def process_shorten(message: types.Message, state: FSMContext) -> None:
     """Сокращает полученный URL и отправляет результат."""
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     long_url = message.text.strip()
     if not (long_url.startswith("http://") or long_url.startswith("https://")):
         await message.answer(
-            "Ссылка должна начинаться с http:// или https://. Попробуйте ещё раз.", reply_markup=get_cancel_kb()
+            "Ссылка должна начинаться с http:// или https://. Попробуйте ещё раз.",
+            reply_markup=get_cancel_kb(),
         )
         return
 
@@ -57,7 +63,8 @@ async def process_shorten(message: types.Message, state: FSMContext) -> None:
             f"Сокращение ссылки провалилось для пользователя {message.from_user.id}, URL: {long_url}"
         )
         await message.answer(
-            "Ошибка при сокращении. Проверьте ссылку и попробуйте снова.", reply_markup=main_kb
+            "Ошибка при сокращении. Проверьте ссылку и попробуйте снова.",
+            reply_markup=main_kb,
         )
 
     await state.clear()

@@ -69,7 +69,11 @@ async def cmd_cancel(message: types.Message, state: FSMContext) -> None:
     """
     current_state = await state.get_state()
     if current_state is None:
-        logger.debug(f"Пользователь {message.from_user.id} использовал /cancel, но ни один из контекстов FSM не был активен")
+        logger.debug(
+            f"Пользователь {message.from_user.id} использовал /cancel, но ни один из контекстов FSM не был активен"
+        )
     await state.clear()
-    logger.info(f"Пользователь {message.from_user.id} отменил активный контекст: {current_state}")
+    logger.info(
+        f"Пользователь {message.from_user.id} отменил активный контекст: {current_state}"
+    )
     await message.answer("Диалог отменён.", reply_markup=main_kb)

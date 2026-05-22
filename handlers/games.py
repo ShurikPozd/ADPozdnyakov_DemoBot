@@ -51,7 +51,9 @@ async def cmd_guess_start(message: types.Message, state: FSMContext) -> None:
     await state.update_data(target=number, attempts=0)
     await state.set_state(GuessGame.waiting_for_number)
     logger.debug(f"User {message.from_user.id} started guess game, target={number}")
-    await message.answer("Загадано число от 1 до 10. Попробуйте угадать.", reply_markup=get_cancel_kb())
+    await message.answer(
+        "Загадано число от 1 до 10. Попробуйте угадать.", reply_markup=get_cancel_kb()
+    )
 
 
 @router.message(GuessGame.waiting_for_number)
@@ -64,7 +66,9 @@ async def process_guess(message: types.Message, state: FSMContext) -> None:
     """
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     try:
         guess = int(message.text.strip())
@@ -72,8 +76,10 @@ async def process_guess(message: types.Message, state: FSMContext) -> None:
         logger.debug(
             f"User {message.from_user.id} sent non-number guess: {message.text}"
         )
-        await message.answer("Необходимо ввести число от 1 до 10.\n" \
-                             "Попробуйте еще раз", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Необходимо ввести число от 1 до 10.\n" "Попробуйте еще раз",
+            reply_markup=get_cancel_kb(),
+        )
         return
 
     data = await state.get_data()
@@ -84,15 +90,22 @@ async def process_guess(message: types.Message, state: FSMContext) -> None:
     )
 
     if guess == target:
-        await message.answer(f"Верно! Число {target} угадано за {attempts} попыток.", reply_markup=main_kb)
+        await message.answer(
+            f"Верно! Число {target} угадано за {attempts} попыток.",
+            reply_markup=main_kb,
+        )
         logger.info(
             f"User {message.from_user.id} won the guess game in {attempts} attempts"
         )
         record_command(message.from_user.id, "/guess")
         await state.clear()
     elif guess < target:
-        await message.answer("Загаданное число больше. Попробуйте ещё раз", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Загаданное число больше. Попробуйте ещё раз", reply_markup=get_cancel_kb()
+        )
         await state.update_data(attempts=attempts)
     else:
-        await message.answer("Загаданное число меньше. Попробуйте ещё раз.", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Загаданное число меньше. Попробуйте ещё раз.", reply_markup=get_cancel_kb()
+        )
         await state.update_data(attempts=attempts)

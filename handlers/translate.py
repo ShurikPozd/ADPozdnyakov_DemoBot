@@ -27,7 +27,8 @@ async def translate_start(message: types.Message, state: FSMContext) -> None:
     await state.set_state(TranslateStates.waiting_for_text)
     await message.answer(
         "Отправьте текст, который нужно перевести на русский язык.\n"
-        "Язык оригинала определится автоматически.", reply_markup=get_cancel_kb()
+        "Язык оригинала определится автоматически.",
+        reply_markup=get_cancel_kb(),
     )
 
 
@@ -36,19 +37,25 @@ async def process_translate(message: types.Message, state: FSMContext) -> None:
     """Переводит полученный текст и отправляет результат."""
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     text = message.text.strip()
     if not text:
-        await message.answer("Пожалуйста, отправьте текст", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Пожалуйста, отправьте текст", reply_markup=get_cancel_kb()
+        )
         return
 
     if len(text) > 500:
         logger.warning(
             f"Пользователь {message.from_user.id} отправил слишком длинный текст: ({len(text)} символов)"
         )
-        await message.answer("Текст слишком длинный (макс. 500 символов).\n" \
-                             "Попробуйте текст короче", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Текст слишком длинный (макс. 500 символов).\n" "Попробуйте текст короче",
+            reply_markup=get_cancel_kb(),
+        )
         return
 
     # Перевод на русский язык
@@ -62,6 +69,8 @@ async def process_translate(message: types.Message, state: FSMContext) -> None:
         record_command(message.from_user.id, "/translate")
     else:
         logger.error(f"Перевод для пользователя {message.from_user.id} не удался")
-        await message.answer("Не удалось перевести. Попробуйте позже.", reply_markup=main_kb)
+        await message.answer(
+            "Не удалось перевести. Попробуйте позже.", reply_markup=main_kb
+        )
 
     await state.clear()

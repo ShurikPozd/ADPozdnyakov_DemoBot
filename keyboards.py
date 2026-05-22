@@ -23,9 +23,9 @@ main_kb = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
+
 def get_cancel_kb():
     """Клавиатура с одной кнопкой /cancel для активного диалога."""
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="/cancel")]],
-        resize_keyboard=True
+        keyboard=[[KeyboardButton(text="/cancel")]], resize_keyboard=True
     )

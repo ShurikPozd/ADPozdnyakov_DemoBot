@@ -45,7 +45,9 @@ async def process_weather(message: types.Message, state: FSMContext) -> None:
     """
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     city = message.text.strip()
     logger.debug(f"User {message.from_user.id} requested weather for city: {city}")
@@ -70,5 +72,7 @@ async def process_weather(message: types.Message, state: FSMContext) -> None:
         logger.warning(
             f"Weather not found for city: {city}, user {message.from_user.id}"
         )
-        await message.answer(f"Город '{city.capitalize()}' не найден.", reply_markup=main_kb)
+        await message.answer(
+            f"Город '{city.capitalize()}' не найден.", reply_markup=main_kb
+        )
     await state.clear()

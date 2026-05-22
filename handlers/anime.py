@@ -34,15 +34,20 @@ async def anime_start(message: types.Message, state: FSMContext) -> None:
     """
     logging.debug(f"User {message.from_user.id} started anime recognition")
     await state.set_state(AnimeStates.waiting_for_photo)
-    await message.answer("Отправьте скриншот из аниме, попробую распознать.\n"
+    await message.answer(
+        "Отправьте скриншот из аниме, попробую распознать.\n"
         "У скриншота не должно быть черных рамок.\n"
         "На скриншоте не должно быть субтитров/прочих надписей отсутствующих в оригинале\n"
         "Таковы условия сервиса trace.moe для более точного распознавания\n"
-        "*Распознавание не всегда является 100% верным", reply_markup=get_cancel_kb())
+        "*Распознавание не всегда является 100% верным",
+        reply_markup=get_cancel_kb(),
+    )
 
 
 @router.message(AnimeStates.waiting_for_photo)
-async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bot) -> None:
+async def process_anime_photo(
+    message: types.Message, state: FSMContext, bot: Bot
+) -> None:
     """Обрабатывает полученное фото, отправляет запрос в trace.moe и возвращает результат.
 
     Args:
@@ -53,7 +58,9 @@ async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bo
     # Проверяем, не отправил ли пользователь команду вместо фото
     if message.text and message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
     if not message.photo:
         logger.debug(f"User {message.from_user.id} sent message without photo")
@@ -71,8 +78,11 @@ async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bo
     best = await search_anime(file_bytes)
     if not best:
         logger.warning(f"No recognition result for user {message.from_user.id}")
-        await message.answer("Не удалось распознать.\n" \
-        "Отправьте команду заново и попробуйте другой скриншот.", reply_markup=main_kb)
+        await message.answer(
+            "Не удалось распознать.\n"
+            "Отправьте команду заново и попробуйте другой скриншот.",
+            reply_markup=main_kb,
+        )
         await state.clear()
         return
 
