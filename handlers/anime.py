@@ -35,12 +35,12 @@ async def anime_start(message: types.Message, state: FSMContext) -> None:
     logging.debug(f"User {message.from_user.id} started anime recognition")
     await state.set_state(AnimeStates.waiting_for_photo)
     await message.answer(
-        "Отправьте скриншот из аниме, попробую распознать.\n"
-        "У скриншота не должно быть черных рамок.\n"
-        "На скриншоте не должно быть субтитров/прочих надписей отсутствующих в оригинале\n"
-        "Таковы условия сервиса trace.moe для более точного распознавания\n"
-        "*Распознавание не всегда является 100% верным",
-        reply_markup=get_cancel_kb(),
+        "Отправьте скриншот из аниме, попробую распознать!\n\n"
+        "- У скриншота не должно быть черных рамок;\n"
+        "- На скриншоте не должно быть субтитров/прочих надписей отсутствующих в оригинале;\n"
+        "- Таковы условия сервиса trace.moe для более точного распознавания.\n\n"
+        "_Распознавание не всегда является 100% верным_",
+        parse_mode="Markdown", reply_markup=get_cancel_kb(),
     )
 
 
