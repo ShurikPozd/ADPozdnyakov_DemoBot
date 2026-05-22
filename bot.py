@@ -23,6 +23,7 @@ from handlers import (
     jokes_facts,
     qr,
     stats,
+    about
 )
 from flask import Flask
 import threading
@@ -58,6 +59,7 @@ dp.include_router(animals.router)
 dp.include_router(jokes_facts.router)
 dp.include_router(qr.router)
 dp.include_router(stats.router)
+dp.include_router(about.router)
 
 
 @dp.error()

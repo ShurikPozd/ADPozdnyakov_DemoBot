@@ -8,14 +8,15 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 main_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="/weather"), KeyboardButton(text="/currency")],
-        [KeyboardButton(text="/anime"), KeyboardButton(text="/translate")],
-        [KeyboardButton(text="/shorten"), KeyboardButton(text="/quote")],
+        [KeyboardButton(text="/translate"), KeyboardButton(text="/anime")],
+        [KeyboardButton(text="/shorten"), KeyboardButton(text="/qr")],
         [KeyboardButton(text="/dice"), KeyboardButton(text="/coin")],
-        [KeyboardButton(text="/guess"), KeyboardButton(text="/cat")],
-        [KeyboardButton(text="/dog"), KeyboardButton(text="/joke")],
-        [KeyboardButton(text="/fact"), KeyboardButton(text="/qr")],
+        [KeyboardButton(text="/guess"), KeyboardButton(text="/quote")],
+        [KeyboardButton(text="/cat"), KeyboardButton(text="/dog")],
+        [KeyboardButton(text="/fact"), KeyboardButton(text="/joke")],
         [
             KeyboardButton(text="/stats"),
+            KeyboardButton(text="/about"),
             KeyboardButton(text="/cancel"),
             KeyboardButton(text="/help"),
         ],
