@@ -66,6 +66,10 @@ async def process_amount(message: types.Message, state: FSMContext) -> None:
         message: Входящее сообщение.
         state: Контекст FSM.
     """
+    if message.text.startswith('/'):
+        await state.clear()
+        await message.answer("Диалог отменён. Отправьте команду заново.")
+        return
     try:
         amount = float(message.text.strip())
         await state.update_data(amount=amount)
@@ -87,6 +91,10 @@ async def process_from_currency(message: types.Message, state: FSMContext) -> No
         message: Входящее сообщение.
         state: Контекст FSM.
     """
+    if message.text.startswith('/'):
+        await state.clear()
+        await message.answer("Диалог отменён. Отправьте команду заново.")
+        return
     from_cur = message.text.strip().upper()
     await state.update_data(from_cur=from_cur)
     await state.set_state(CurrencyStates.waiting_for_to_currency)
@@ -102,6 +110,10 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
         message: Входящее сообщение.
         state: Контекст FSM (очищается после ответа).
     """
+    if message.text.startswith('/'):
+        await state.clear()
+        await message.answer("Диалог отменён. Отправьте команду заново.")
+        return
     to_cur = message.text.strip().upper()
     user_data = await state.get_data()
     amount = user_data["amount"]

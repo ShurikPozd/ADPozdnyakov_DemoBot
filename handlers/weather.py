@@ -42,6 +42,10 @@ async def process_weather(message: types.Message, state: FSMContext) -> None:
         message: Входящее сообщение.
         state: Контекст FSM (очищается после ответа).
     """
+    if message.text.startswith('/'):
+        await state.clear()
+        await message.answer("Диалог отменён. Отправьте команду заново.")
+        return
     city = message.text.strip()
     logger.debug(f"User {message.from_user.id} requested weather for city: {city}")
     data = await get_weather(city)

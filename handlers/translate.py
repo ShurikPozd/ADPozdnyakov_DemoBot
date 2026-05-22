@@ -1,10 +1,12 @@
 """Перевод текста (/translate) с использованием googletrans.
 
-Переводит введённый текст на русский язык (автоопределение исходного языка).
+Реализует FSM: запрашивает текст, переводит на русский.
 """
 
 from aiogram import Router, types
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from services.translate_api import translate_text
 import logging
 from handlers.stats import record_command
@@ -12,37 +14,46 @@ from handlers.stats import record_command
 router = Router()
 logger = logging.getLogger(__name__)
 
+class TranslateStates(StatesGroup):
+    waiting_for_text = State()
+
 
 @router.message(Command("translate"))
-async def cmd_translate(message: types.Message) -> None:
-    """Переводит текст, введённый после команды, на русский язык.
+async def translate_start(message: types.Message, state: FSMContext) -> None:
+    """Начинает диалог перевода, запрашивает текст."""
+    logger.info(f"Пользователь {message.from_user.id} отправил команду /translate")
+    await state.set_state(TranslateStates.waiting_for_text)
+    await message.answer("Отправьте текст, который нужно перевести на русский язык.\n"
+                         "Язык оригинала определится автоматически.")
 
-    Args:
-        message: Входящее сообщение.
-    """
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2:
-        logger.debug(f"User {message.from_user.id} used /translate without text")
-        await message.answer(
-            "Использование: /translate <текст для перевода на русский>"
-        )
+@router.message(TranslateStates.waiting_for_text)
+async def process_translate(message: types.Message, state: FSMContext) -> None:
+    """Переводит полученный текст и отправляет результат."""
+    if message.text.startswith('/'):
+        await state.clear()
+        await message.answer("Диалог отменён. Отправьте команду заново.")
+        return
+    text = message.text.strip()
+    if not text:
+        await message.answer("Пожалуйста, отправьте текст")
         return
 
-    text = args[1].strip()
     if len(text) > 500:
         logger.warning(
-            f"User {message.from_user.id} sent text that's too long: ({len(text)} chars)"
+            f"Пользователь {message.from_user.id} отправил слишком длинный текст: ({len(text)} символов)"
         )
         await message.answer("Текст слишком длинный (макс. 500 символов).")
         return
 
     # Перевод на русский язык
-    logger.debug(f"User {message.from_user.id} requests translation of: {text[:50]}...")
+    logger.debug(f"Пользователь {message.from_user.id} запросил перевод: {text[:50]}...")
     translated = await translate_text(text, target_lang="ru")
     if translated:
         await message.answer(f"Перевод:\n{translated}")
-        logger.info(f"Translation sent to user {message.from_user.id}")
+        logger.info(f"Перевод отправлен пользователю {message.from_user.id}")
         record_command(message.from_user.id, "/translate")
     else:
-        logger.error(f"Translation failed for user {message.from_user.id}")
+        logger.error(f"Перевод для пользователя {message.from_user.id} не удался")
         await message.answer("Не удалось перевести. Попробуйте позже.")
+
+    await state.clear()

@@ -47,6 +47,10 @@ async def process_anime_photo(
         state: Контекст FSM (очищается после ответа).
         bot: Экземпляр бота для скачивания файла.
     """
+    if message.text.startswith('/'):
+        await state.clear()
+        await message.answer("Диалог отменён. Отправьте команду заново.")
+        return
     if not message.photo:
         logger.debug(f"User {message.from_user.id} sent message without photo")
         await message.answer("Отправьте изображение.")
