@@ -1,4 +1,6 @@
-# 🤖 ADPozdnyakov DemoBot
+# 🤖 ADPozdnyakov_DemoBot
+
+> 🚀 **Попробовать бота:** [@ADPozdnyakov_DemoBot](https://t.me/ADPozdnyakov_DemoBot)
 
 Многофункциональный Telegram-бот, демонстрирующий широкий спектр возможностей Python-разработки: асинхронность, работа с API, кэширование, FSM (машина состояний), базы данных (SQLite), логирование, тестирование, CI/CD, контейнеризация (Docker) и парсинг веб-страниц.
 
@@ -139,6 +141,7 @@ python scripts/scrape_quotes.py
 
 ## 📬 Контакты
 
+- **Попробовать бота:** [@ADPozdnyakov_DemoBot](https://t.me/ADPozdnyakov_DemoBot)
 - GitHub: [ShurikPozd](https://github.com/ShurikPozd)
 - Telegram: [@ShurikPozd](https://t.me/ShurikPozd)
 - По вопросам и предложениям – пишите.
