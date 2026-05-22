@@ -12,6 +12,7 @@ from services.trace_api import search_anime
 from utils.formatters import format_time
 import logging
 from handlers.stats import record_command
+from keyboards import main_kb, get_cancel_kb
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -33,13 +34,15 @@ async def anime_start(message: types.Message, state: FSMContext) -> None:
     """
     logging.debug(f"User {message.from_user.id} started anime recognition")
     await state.set_state(AnimeStates.waiting_for_photo)
-    await message.answer("Отправьте скриншот из аниме, попробую распознать.")
+    await message.answer("Отправьте скриншот из аниме, попробую распознать.\n"
+        "У скриншота не должно быть черных рамок.\n"
+        "На скриншоте не должно быть субтитров/прочих надписей отсутствующих в оригинале\n"
+        "Таковы условия сервиса trace.moe для более точного распознавания\n"
+        "*Распознавание не всегда является 100% верным", reply_markup=get_cancel_kb())
 
 
 @router.message(AnimeStates.waiting_for_photo)
-async def process_anime_photo(
-    message: types.Message, state: FSMContext, bot: Bot
-) -> None:
+async def process_anime_photo(message: types.Message, state: FSMContext, bot: Bot) -> None:
     """Обрабатывает полученное фото, отправляет запрос в trace.moe и возвращает результат.
 
     Args:
@@ -47,13 +50,14 @@ async def process_anime_photo(
         state: Контекст FSM (очищается после ответа).
         bot: Экземпляр бота для скачивания файла.
     """
-    if message.text.startswith("/"):
+    # Проверяем, не отправил ли пользователь команду вместо фото
+    if message.text and message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.")
+        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
         return
     if not message.photo:
         logger.debug(f"User {message.from_user.id} sent message without photo")
-        await message.answer("Отправьте изображение.")
+        await message.answer("Пожалуйста, отправьте изображение.")
         return
 
     photo = message.photo[-1]
@@ -67,7 +71,8 @@ async def process_anime_photo(
     best = await search_anime(file_bytes)
     if not best:
         logger.warning(f"No recognition result for user {message.from_user.id}")
-        await message.answer("Не удалось распознать. Попробуйте другой скриншот.")
+        await message.answer("Не удалось распознать.\n" \
+        "Отправьте команду заново и попробуйте другой скриншот.", reply_markup=main_kb)
         await state.clear()
         return
 
@@ -94,7 +99,7 @@ async def process_anime_photo(
         f"Эпизод: {episode if episode else 'неизвестен'}\n"
         f"Таймкод: {time_str}"
     )
-    await message.answer(answer)
+    await message.answer(answer, reply_markup=main_kb)
     logger.info(
         f"Anime recognized for user {message.from_user.id}: {title} (similarity {similarity:.2f}%)"
     )

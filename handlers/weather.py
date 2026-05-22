@@ -10,6 +10,7 @@ from aiogram.fsm.state import State, StatesGroup
 from services.weather_api import get_weather
 import logging
 from handlers.stats import record_command
+from keyboards import main_kb, get_cancel_kb
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ async def weather_start(message: types.Message, state: FSMContext) -> None:
     """
     logger.info(f"User {message.from_user.id} started weather command")
     await state.set_state(WeatherStates.waiting_for_city)
-    await message.answer("Введите название города: ")
+    await message.answer("Введите название города: ", reply_markup=get_cancel_kb())
 
 
 @router.message(WeatherStates.waiting_for_city)
@@ -44,7 +45,7 @@ async def process_weather(message: types.Message, state: FSMContext) -> None:
     """
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.")
+        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
         return
     city = message.text.strip()
     logger.debug(f"User {message.from_user.id} requested weather for city: {city}")
@@ -62,12 +63,12 @@ async def process_weather(message: types.Message, state: FSMContext) -> None:
             f"Ветер: {wind} м/с\n"
             f"{desc}"
         )
-        await message.answer(answer)
+        await message.answer(answer, reply_markup=main_kb)
         logger.info(f"Weather for {city} sent to user {message.from_user.id}")
         record_command(message.from_user.id, "/weather")
     else:
         logger.warning(
             f"Weather not found for city: {city}, user {message.from_user.id}"
         )
-        await message.answer(f"Город '{city.capitalize()}' не найден.")
+        await message.answer(f"Город '{city.capitalize()}' не найден.", reply_markup=main_kb)
     await state.clear()
