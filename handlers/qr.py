@@ -14,6 +14,7 @@ from handlers.stats import record_command
 router = Router()
 logger = logging.getLogger(__name__)
 
+
 class QRStates(StatesGroup):
     waiting_for_data = State()
 
@@ -25,10 +26,11 @@ async def qr_start(message: types.Message, state: FSMContext) -> None:
     await state.set_state(QRStates.waiting_for_data)
     await message.answer("Отправьте текст или ссылку для генерации QR-кода.")
 
+
 @router.message(QRStates.waiting_for_data)
 async def process_qr(message: types.Message, state: FSMContext) -> None:
     """Генерирует QR-код для полученных данных и отправляет изображение."""
-    if message.text.startswith('/'):
+    if message.text.startswith("/"):
         await state.clear()
         await message.answer("Диалог отменён. Отправьте команду заново.")
         return
@@ -43,7 +45,7 @@ async def process_qr(message: types.Message, state: FSMContext) -> None:
         )
         await message.answer("Текст слишком длинный (макс. 500 символов).")
         return
-    
+
     try:
         qr_io = await generate_qr_code(data)
         # Обёртываем BytesIO в BufferedInputFile
@@ -52,7 +54,9 @@ async def process_qr(message: types.Message, state: FSMContext) -> None:
         logger.debug(f"QR-код отправлен пользователю {message.from_user.id}")
         record_command(message.from_user.id, "/qr")
     except Exception as e:
-        logger.exception(f"Генерация QR провалилась для пользователя {message.from_user.id}: {e}")
+        logger.exception(
+            f"Генерация QR провалилась для пользователя {message.from_user.id}: {e}"
+        )
         await message.answer(f"Ошибка генерации QR-кода: {e}")
 
     await state.clear()

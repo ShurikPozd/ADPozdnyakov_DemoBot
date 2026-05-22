@@ -14,6 +14,7 @@ from handlers.stats import record_command
 router = Router()
 logger = logging.getLogger(__name__)
 
+
 class TranslateStates(StatesGroup):
     waiting_for_text = State()
 
@@ -23,13 +24,16 @@ async def translate_start(message: types.Message, state: FSMContext) -> None:
     """Начинает диалог перевода, запрашивает текст."""
     logger.info(f"Пользователь {message.from_user.id} отправил команду /translate")
     await state.set_state(TranslateStates.waiting_for_text)
-    await message.answer("Отправьте текст, который нужно перевести на русский язык.\n"
-                         "Язык оригинала определится автоматически.")
+    await message.answer(
+        "Отправьте текст, который нужно перевести на русский язык.\n"
+        "Язык оригинала определится автоматически."
+    )
+
 
 @router.message(TranslateStates.waiting_for_text)
 async def process_translate(message: types.Message, state: FSMContext) -> None:
     """Переводит полученный текст и отправляет результат."""
-    if message.text.startswith('/'):
+    if message.text.startswith("/"):
         await state.clear()
         await message.answer("Диалог отменён. Отправьте команду заново.")
         return
@@ -46,7 +50,9 @@ async def process_translate(message: types.Message, state: FSMContext) -> None:
         return
 
     # Перевод на русский язык
-    logger.debug(f"Пользователь {message.from_user.id} запросил перевод: {text[:50]}...")
+    logger.debug(
+        f"Пользователь {message.from_user.id} запросил перевод: {text[:50]}..."
+    )
     translated = await translate_text(text, target_lang="ru")
     if translated:
         await message.answer(f"Перевод:\n{translated}")

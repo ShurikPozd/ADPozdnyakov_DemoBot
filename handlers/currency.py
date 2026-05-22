@@ -66,7 +66,7 @@ async def process_amount(message: types.Message, state: FSMContext) -> None:
         message: Входящее сообщение.
         state: Контекст FSM.
     """
-    if message.text.startswith('/'):
+    if message.text.startswith("/"):
         await state.clear()
         await message.answer("Диалог отменён. Отправьте команду заново.")
         return
@@ -91,7 +91,7 @@ async def process_from_currency(message: types.Message, state: FSMContext) -> No
         message: Входящее сообщение.
         state: Контекст FSM.
     """
-    if message.text.startswith('/'):
+    if message.text.startswith("/"):
         await state.clear()
         await message.answer("Диалог отменён. Отправьте команду заново.")
         return
@@ -110,7 +110,7 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
         message: Входящее сообщение.
         state: Контекст FSM (очищается после ответа).
     """
-    if message.text.startswith('/'):
+    if message.text.startswith("/"):
         await state.clear()
         await message.answer("Диалог отменён. Отправьте команду заново.")
         return

@@ -42,7 +42,7 @@ async def process_weather(message: types.Message, state: FSMContext) -> None:
         message: Входящее сообщение.
         state: Контекст FSM (очищается после ответа).
     """
-    if message.text.startswith('/'):
+    if message.text.startswith("/"):
         await state.clear()
         await message.answer("Диалог отменён. Отправьте команду заново.")
         return

@@ -61,7 +61,7 @@ async def process_guess(message: types.Message, state: FSMContext) -> None:
         message: Входящее сообщение.
         state: Контекст FSM.
     """
-    if message.text.startswith('/'):
+    if message.text.startswith("/"):
         await state.clear()
         await message.answer("Диалог отменён. Отправьте команду заново.")
         return
