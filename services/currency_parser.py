@@ -153,16 +153,8 @@ def parse_with_natasha_ner(
     return None
 
 
-def fallback_parse(text: str, currency_names: dict) -> Optional[Tuple[float, str, str]]:
-    """Fallback-парсер с лемматизацией всех слов."""
-    amount = extract_amount(text)
-    if amount is None:
-        return None
-
-    lemmatized_text = normalize_and_lemmatize(text)
-    words = lemmatized_text.split()
-
-    # Ищем фразы и отдельные слова
+def find_currency_matches(words: list, currency_names: dict) -> list:
+    """Находит все вхождения валют в списке слов (фразы и отдельные слова)."""
     found = []
     used_positions = set()
 
@@ -184,16 +176,35 @@ def fallback_parse(text: str, currency_names: dict) -> Optional[Tuple[float, str
             found.append((i, currency_names[words[i]]))
             used_positions.add(i)
 
-    if len(found) < 2:
-        return None
+    return found
 
-    # Убираем дубликаты кодов
+
+def deduplicate_currencies(found: list) -> list:
+    """Убирает дубликаты кодов валют, оставляя первое вхождение."""
     unique_ordered = []
     seen = set()
     for _, code in found:
         if code not in seen:
             seen.add(code)
             unique_ordered.append(code)
+    return unique_ordered
+
+
+def fallback_parse(text: str, currency_names: dict) -> Optional[Tuple[float, str, str]]:
+    """Fallback-парсер с лемматизацией всех слов."""
+    amount = extract_amount(text)
+    if amount is None:
+        return None
+
+    lemmatized_text = normalize_and_lemmatize(text)
+    words = lemmatized_text.split()
+
+    found = find_currency_matches(words, currency_names)
+
+    if len(found) < 2:
+        return None
+
+    unique_ordered = deduplicate_currencies(found)
 
     if len(unique_ordered) < 2:
         return None
