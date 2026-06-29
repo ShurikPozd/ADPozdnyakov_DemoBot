@@ -7,4 +7,4 @@ pillow
 flask
 natasha
 pymorphy2-dicts-ru
-setuptools
+setuptools<81
