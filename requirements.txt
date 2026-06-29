@@ -6,3 +6,4 @@ qrcode
 pillow
 flask
 natasha
+pymorphy2-dicts-ru
