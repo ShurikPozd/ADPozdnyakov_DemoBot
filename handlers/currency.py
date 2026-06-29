@@ -46,6 +46,7 @@ def convert_currency(
     result = rub_amount / rates[to_cur]
     return round(result, 2)
 
+
 async def get_currency_code(text: str) -> str | None:
     """Пытается преобразовать русское название в код валюты (USD, EUR и т.д.)."""
     text = text.strip().lower()
@@ -65,6 +66,7 @@ async def get_currency_code(text: str) -> str | None:
         return names[first_word]
     return None
 
+
 async def try_parse_and_convert(message: types.Message, state: FSMContext) -> bool:
     """
     Пытается распарсить сообщение как полный запрос.
@@ -74,28 +76,34 @@ async def try_parse_and_convert(message: types.Message, state: FSMContext) -> bo
     text = message.text.strip()
     if not text:
         return False
-    
+
     rates, names = await get_cbr_rates()
     if rates is None:
         await message.answer("Не удалось получить курсы валют. Попробуйте позже.")
         await state.clear()
-        return True # считаем, что обработали (с ошибкой)
-    
+        return True  # считаем, что обработали (с ошибкой)
+
     parsed = parse_currency_request(text, names)
     if parsed is None:
         return False
-    
+
     amount, from_cur, to_cur = parsed
     result = convert_currency(amount, from_cur, to_cur, rates)
     if result is None:
-        await message.answer(f"Одна из валют не поддерживается. Доступны: {', '.join(rates.keys())}")
+        await message.answer(
+            f"Одна из валют не поддерживается. Доступны: {', '.join(rates.keys())}"
+        )
         await state.clear()
         return True
-    
-    await message.answer(f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)", reply_markup=main_kb)
+
+    await message.answer(
+        f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)",
+        reply_markup=main_kb,
+    )
     record_command(message.from_user.id, "/currency")
     await state.clear()
     return True
+
 
 @router.message(Command("currency"))
 async def currency_start(message: types.Message, state: FSMContext) -> None:
@@ -115,13 +123,19 @@ async def currency_start(message: types.Message, state: FSMContext) -> None:
             return
         # Если не удалось распарсить, можно продолжить FSM или сообщить
         # Пока просто запускаем FSM
-        await message.answer("Не удалось распознать ваш запрос. Введите сумму вручную:", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Не удалось распознать ваш запрос. Введите сумму вручную:",
+            reply_markup=get_cancel_kb(),
+        )
         await state.set_state(CurrencyStates.waiting_for_amount)
         return
 
     # Если текста нет — запускаем FSM
     await state.set_state(CurrencyStates.waiting_for_amount)
-    await message.answer("Введите сумму (или сразу запрос, например: 100 долларов в евро): ", reply_markup=get_cancel_kb())
+    await message.answer(
+        "Введите сумму (или сразу запрос, например: 100 долларов в евро): ",
+        reply_markup=get_cancel_kb(),
+    )
 
 
 @router.message(CurrencyStates.waiting_for_amount)
@@ -138,7 +152,7 @@ async def process_amount(message: types.Message, state: FSMContext) -> None:
             "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
         )
         return
-    
+
     # Пробуем распарсить полный запрос
     if await try_parse_and_convert(message, state):
         return
@@ -158,7 +172,8 @@ async def process_amount(message: types.Message, state: FSMContext) -> None:
             f"User {message.from_user.id} entered invalid amount: {message.text}"
         )
         await message.answer(
-            "Ошибка: введите число или полный запрос (например, 100 долларов в евро).", reply_markup=get_cancel_kb()
+            "Ошибка: введите число или полный запрос (например, 100 долларов в евро).",
+            reply_markup=get_cancel_kb(),
         )
 
 
@@ -176,7 +191,7 @@ async def process_from_currency(message: types.Message, state: FSMContext) -> No
             "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
         )
         return
-    
+
     # Пробуем распарсить полный запрос
     if await try_parse_and_convert(message, state):
         return
@@ -186,9 +201,12 @@ async def process_from_currency(message: types.Message, state: FSMContext) -> No
     code = await get_currency_code(text)
     if code is None:
         # Не удалось распознать - просим ввести код
-        await message.answer("Не удалось распознать валюту. Пожалуйста, введите код (например, USD, EUR, RUB):", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Не удалось распознать валюту. Пожалуйста, введите код (например, USD, EUR, RUB):",
+            reply_markup=get_cancel_kb(),
+        )
         return
-    
+
     from_cur = code
     await state.update_data(from_cur=from_cur)
     await state.set_state(CurrencyStates.waiting_for_to_currency)
@@ -213,8 +231,8 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
             "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
         )
         return
-    
-     # Пробуем распарсить полный запрос
+
+    # Пробуем распарсить полный запрос
     if await try_parse_and_convert(message, state):
         return
 
@@ -222,9 +240,12 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
     text = message.text.strip()
     code = await get_currency_code(text)
     if code is None:
-        await message.answer("Не удалось распознать валюту. Пожалуйста, введите код (например, USD, EUR, RUB):", reply_markup=get_cancel_kb())
+        await message.answer(
+            "Не удалось распознать валюту. Пожалуйста, введите код (например, USD, EUR, RUB):",
+            reply_markup=get_cancel_kb(),
+        )
         return
-    
+
     to_cur = code
     user_data = await state.get_data()
     amount = user_data["amount"]
@@ -246,7 +267,9 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
         return
 
     if from_cur not in rates or to_cur not in rates:
-        await message.answer(f"Одна из валют не найдена. Доступны: {', '.join(rates.keys())}")
+        await message.answer(
+            f"Одна из валют не найдена. Доступны: {', '.join(rates.keys())}"
+        )
         await state.clear()
         return
 
