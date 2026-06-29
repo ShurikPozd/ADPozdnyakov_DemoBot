@@ -13,30 +13,26 @@ _cached_names = None
 _cache_time = None
 CACHE_TTL = 3600
 
-# Синонимы для валют (приводим к единому виду перед лемматизацией)
-SYNONYMS = {
-    "йена": "иена", # японская йена → иена (как в ЦБ)
-    "йен": "иен",
-    "йены": "иены",
-    "йенах": "иенах",
-    "тенге": "тенге",
-    "бат": "бат",
-    "фунт": "фунт",
-    "евро": "евро",
-    "доллар": "доллар",
-    "рубль": "рубль",
+# Приоритет валют (чем меньше число, тем выше приоритет)
+CURRENCY_PRIORITY = {
+    "USD": 1,   # Доллар США — самый важный
+    "EUR": 2,
+    "RUB": 3,
+    "GBP": 4,
+    "CNY": 5,
+    "JPY": 6,
+    # Остальные валюты получают низкий приоритет
 }
+
+def get_priority(code: str) -> int:
+    """Возвращает приоритет валюты (чем меньше, тем выше)."""
+    return CURRENCY_PRIORITY.get(code, 999)
 
 # Инициализация Natasha
 segmenter = Segmenter()
 morph_vocab = MorphVocab()
 emb = NewsEmbedding()
 morph_tagger = NewsMorphTagger(emb)
-
-def normalize_currency_name(word: str) -> str:
-    """Приводит название валюты к форме, используемой в ЦБ."""
-    word_lower = word.lower()
-    return SYNONYMS.get(word_lower, word_lower)
 
 def lemmatize_word(word: str) -> str:
     """Лемматизация одного слова через Natasha."""
@@ -59,6 +55,16 @@ def lemmatize_phrase(phrase: str) -> str:
         token.lemmatize(morph_vocab)
         lemmas.append(token.lemma if token.lemma else token.text.lower())
     return ' '.join(lemmas)
+
+def add_currency_name(name: str, code: str, names: dict) -> None:
+    """Добавляет название валюты в словарь с учётом приоритета."""
+    if name not in names:
+        names[name] = code
+    else:
+        existing_code = names[name]
+        # Если текущая валюта имеет более высокий приоритет — заменяем
+        if get_priority(code) < get_priority(existing_code):
+            names[name] = code
 
 async def get_cbr_rates():
     global _cached_rates, _cached_names, _cache_time
@@ -86,25 +92,22 @@ async def get_cbr_rates():
                         rates[code] = info["Value"] / info["Nominal"]
                         raw_name = info["Name"].strip().lower()
                         
-                        # Нормализуем название перед лемматизацией
-                        normalized_parts = [normalize_currency_name(w) for w in raw_name.split()]
-                        normalized_name = ' '.join(normalized_parts)
+                        # Добавляем полное название
+                        names[raw_name] = code
                         
-                        # Лемматизируем нормализованное полное название
-                        lemmatized_full = lemmatize_phrase(normalized_name)
-                        names[lemmatized_full] = code
+                        # Разбиваем на слова и лемматизируем
+                        words = raw_name.split()
+                        lemmatized_words = [lemmatize_word(w) for w in words]
                         
-                        # Лемматизируем каждое слово отдельно
-                        for word in normalized_parts:
-                            lemma = lemmatize_word(word)
-                            if lemma not in names:
-                                names[lemma] = code
+                        # Добавляем каждую лемму с приоритетом
+                        for lemma in lemmatized_words:
+                            add_currency_name(lemma, code, names)
                         
-                        # Также добавляем последнее слово как отдельную лемму
-                        if normalized_parts:
-                            last_lemma = lemmatize_word(normalized_parts[-1])
-                            if last_lemma not in names:
-                                names[last_lemma] = code
+                        # Добавляем фразы из 2-3 слов (для "доллар сша" и т.д.)
+                        for i in range(len(lemmatized_words)):
+                            for j in range(i+1, min(i+4, len(lemmatized_words)+1)):
+                                phrase = ' '.join(lemmatized_words[i:j])
+                                add_currency_name(phrase, code, names)
 
                     _cached_rates = rates
                     _cached_names = names

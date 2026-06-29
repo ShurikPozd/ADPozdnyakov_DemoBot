@@ -77,7 +77,6 @@ def parse_currency_request(text: str, currency_names: dict) -> Optional[Tuple[fl
 
             # Лемматизируем часть с валютой
             currency_part = re.sub(r'^[\d.,\s]+', '', money_text).strip().lower()
-            # Нормализуем название
             normalized = ' '.join([normalize_currency_name(w) for w in currency_part.split()])
             lemmatized_currency = lemmatize_text(normalized)
             
@@ -96,7 +95,6 @@ def parse_currency_request(text: str, currency_names: dict) -> Optional[Tuple[fl
             else:
                 # Ищем целевую валюту в оставшемся тексте
                 remaining = text.replace(money_text, '').strip()
-                # Нормализуем оставшийся текст
                 normalized_remaining = ' '.join([normalize_currency_name(w) for w in remaining.split()])
                 lemmatized_remaining = lemmatize_text(normalized_remaining)
                 
@@ -137,14 +135,30 @@ def parse_currency_request(text: str, currency_names: dict) -> Optional[Tuple[fl
     # Нормализуем и лемматизируем весь текст
     normalized_text = ' '.join([normalize_currency_name(w) for w in text.split()])
     lemmatized_text = lemmatize_text(normalized_text)
-    words = lemmatized_text.split()
-    
-    # Ищем все леммы, которые есть в словаре
+
+    # Ищем все леммы и фразы, которые есть в словаре
     found = []  # (позиция, код_валюты)
-    for i, word in enumerate(words):
-        if word in currency_names:
-            found.append((i, currency_names[word]))
-    
+    words = lemmatized_text.split()
+
+    # Сначала ищем более длинные совпадения (фразы из 2-3 слов)
+    used_positions = set()
+    for i in range(len(words)):
+        if i in used_positions:
+            continue
+        # Проверяем фразы из 2-3 слов
+        matched = False
+        for j in range(i+1, min(i+4, len(words)+1)):
+            phrase = ' '.join(words[i:j])
+            if phrase in currency_names:
+                found.append((i, currency_names[phrase]))
+                for k in range(i, j):
+                    used_positions.add(k)
+                matched = True
+                break
+        if not matched and words[i] in currency_names:
+            found.append((i, currency_names[words[i]]))
+            used_positions.add(i)
+
     if len(found) < 2:
         logger.debug(f"Fallback: found only {len(set(c for _, c in found))} unique currencies")
         return None
