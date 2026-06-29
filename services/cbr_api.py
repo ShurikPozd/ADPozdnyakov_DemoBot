@@ -1,42 +1,73 @@
-"""Клиент для получения курсов валют Центрального банка России (ЦБ РФ).
-
-Предоставляет асинхронную функцию для получения курсов (база – рубль) с кэшированием на 1 час.
-"""
+"""Клиент для получения курсов валют Центрального банка России (ЦБ РФ)."""
 
 import aiohttp
 import json
 import logging
 import time
+from natasha import Segmenter, MorphVocab, NewsMorphTagger, NewsEmbedding, Doc
 
 logger = logging.getLogger(__name__)
 
-# Кэш: храним курсы и время последнего обновления
 _cached_rates = None
+_cached_names = None
 _cache_time = None
-CACHE_TTL = 3600  # 1 час в секундах
+CACHE_TTL = 3600
 
+# Синонимы для валют (приводим к единому виду перед лемматизацией)
+SYNONYMS = {
+    "йена": "иена", # японская йена → иена (как в ЦБ)
+    "йен": "иен",
+    "йены": "иены",
+    "йенах": "иенах",
+    "тенге": "тенге",
+    "бат": "бат",
+    "фунт": "фунт",
+    "евро": "евро",
+    "доллар": "доллар",
+    "рубль": "рубль",
+}
 
-async def get_cbr_rates() -> dict | None:
-    """Получает курсы валют от ЦБ РФ (база – RUB) с кэшированием.
+# Инициализация Natasha
+segmenter = Segmenter()
+morph_vocab = MorphVocab()
+emb = NewsEmbedding()
+morph_tagger = NewsMorphTagger(emb)
 
-    Returns:
-        dict: Сопоставление кода валюты (например, 'USD') с её курсом относительно 1 единицы.
-              Пример: {'RUB': 1.0, 'USD': 91.5, ...}
-        None: При ошибке сети или JSON.
-    """
-    global _cached_rates, _cache_time
+def normalize_currency_name(word: str) -> str:
+    """Приводит название валюты к форме, используемой в ЦБ."""
+    word_lower = word.lower()
+    return SYNONYMS.get(word_lower, word_lower)
+
+def lemmatize_word(word: str) -> str:
+    """Лемматизация одного слова через Natasha."""
+    doc = Doc(word)
+    doc.segment(segmenter)
+    doc.tag_morph(morph_tagger)
+    for token in doc.tokens:
+        token.lemmatize(morph_vocab)
+        if token.lemma:
+            return token.lemma
+    return word.lower()
+
+def lemmatize_phrase(phrase: str) -> str:
+    """Лемматизация всей фразы (соединяем леммы через пробел)."""
+    doc = Doc(phrase)
+    doc.segment(segmenter)
+    doc.tag_morph(morph_tagger)
+    lemmas = []
+    for token in doc.tokens:
+        token.lemmatize(morph_vocab)
+        lemmas.append(token.lemma if token.lemma else token.text.lower())
+    return ' '.join(lemmas)
+
+async def get_cbr_rates():
+    global _cached_rates, _cached_names, _cache_time
     now = time.time()
 
-    # Если кэш есть и не устарел – возвращаем
-    if (
-        _cached_rates is not None
-        and _cache_time is not None
-        and (now - _cache_time) < CACHE_TTL
-    ):
-        logger.debug("Возвращаем курсы валют из кэша")
-        return _cached_rates
+    if (_cached_rates is not None and _cache_time is not None
+            and (now - _cache_time) < CACHE_TTL):
+        return _cached_rates, _cached_names
 
-    # Иначе загружаем новые курсы
     url = "https://www.cbr-xml-daily.ru/daily_json.js"
     try:
         async with aiohttp.ClientSession() as session:
@@ -45,22 +76,44 @@ async def get_cbr_rates() -> dict | None:
                     text = await response.text()
                     data = json.loads(text)
                     rates = {"RUB": 1.0}
+                    names = {}
+
+                    # Добавляем рубль вручную
+                    rub_lemmas = lemmatize_phrase("рубль")
+                    names[rub_lemmas] = "RUB"
+
                     for code, info in data["Valute"].items():
                         rates[code] = info["Value"] / info["Nominal"]
-                    # Сохраняем в кэш
+                        raw_name = info["Name"].strip().lower()
+                        
+                        # Нормализуем название перед лемматизацией
+                        normalized_parts = [normalize_currency_name(w) for w in raw_name.split()]
+                        normalized_name = ' '.join(normalized_parts)
+                        
+                        # Лемматизируем нормализованное полное название
+                        lemmatized_full = lemmatize_phrase(normalized_name)
+                        names[lemmatized_full] = code
+                        
+                        # Лемматизируем каждое слово отдельно
+                        for word in normalized_parts:
+                            lemma = lemmatize_word(word)
+                            if lemma not in names:
+                                names[lemma] = code
+                        
+                        # Также добавляем последнее слово как отдельную лемму
+                        if normalized_parts:
+                            last_lemma = lemmatize_word(normalized_parts[-1])
+                            if last_lemma not in names:
+                                names[last_lemma] = code
+
                     _cached_rates = rates
+                    _cached_names = names
                     _cache_time = now
-                    logger.info("Курсы валют обновлены и закэшированы")
-                    return rates
+                    logger.info(f"Курсы валют обновлены. Загружено {len(names)} лемм")
+                    return rates, names
                 else:
                     logger.warning(f"CBR API returned status {response.status}")
-                    return None
-    except aiohttp.ClientError as e:
-        logger.error(f"Network error fetching CBR rates: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error in CBR response: {e}")
-        return None
+                    return None, None
     except Exception as e:
-        logger.exception(f"Unexpected error in get_cbr_rates: {e}")
-        return None
+        logger.exception(f"Error fetching CBR rates: {e}")
+        return None, None
