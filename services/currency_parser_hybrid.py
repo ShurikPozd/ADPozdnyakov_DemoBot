@@ -4,148 +4,17 @@ import re
 import logging
 from typing import Optional, Tuple
 import pycountry
+from services.currency_names import POPULAR_NAMES
 
 logger = logging.getLogger(__name__)
 
-# Словарь разговорных названий валют (ВСЕ КЛЮЧИ — В НИЖНЕМ РЕГИСТРЕ)
-POPULAR_NAMES = {
-    # Кроны — все формы
-    "crown": "DKK",
-    "crowns": "DKK",
-    "danish crown": "DKK",
-    "danish crowns": "DKK",
-    "danish krone": "DKK",
-    "danish kroner": "DKK",
-    "czech crown": "CZK",
-    "czech crowns": "CZK",
-    "czech koruna": "CZK",
-    "koruna": "CZK",
-    "krone": "NOK",
-    "kroner": "NOK",
-    "norwegian krone": "NOK",
-    "swedish krona": "SEK",
-    "swedish kronor": "SEK",
-    # Евро
-    "euro": "EUR",
-    "euros": "EUR",
-    # Доллары
-    "buck": "USD",
-    "bucks": "USD",
-    "greenback": "USD",
-    "aussie": "AUD",
-    "loonie": "CAD",
-    "kiwi": "NZD",
-    "hong kong dollar": "HKD",
-    "singapore dollar": "SGD",
-    "dollar": "USD",
-    "dollars": "USD",
-    "canadian dollar": "CAD",
-    "canadian dollars": "CAD",
-    "us dollar": "USD",
-    "us dollars": "USD",
-    # Фунты
-    "quid": "GBP",
-    "pound sterling": "GBP",
-    "pound": "GBP",
-    "pounds": "GBP",
-    # Рубли
-    "rub": "RUB",
-    "ruble": "RUB",
-    "rubles": "RUB",
-    "rouble": "RUB",
-    "roubles": "RUB",
-    # Азиатские
-    "yuan": "CNY",
-    "renminbi": "CNY",
-    "yen": "JPY",
-    "baht": "THB",
-    "tenge": "KZT",
-    "rupee": "INR",
-    "rupiah": "IDR",
-    "taka": "BDT",
-    "kyat": "MMK",
-    "riel": "KHR",
-    "ringgit": "MYR",
-    # Ближневосточные
-    "dirham": "AED",
-    "uae dirham": "AED",
-    "emirati dirham": "AED",
-    "shekel": "ILS",
-    "new shekel": "ILS",
-    "lira": "TRY",
-    "rial": "IRR",
-    "iranian rial": "IRR",
-    "qatari riyal": "QAR",
-    "saudi riyal": "SAR",
-    # Африканские
-    "rand": "ZAR",
-    "naira": "NGN",
-    "cedi": "GHS",
-    "shilling": "KES",
-    "kenyan shilling": "KES",
-    "tanzanian shilling": "TZS",
-    "ugandan shilling": "UGX",
-    "kwacha": "MWK",
-    "malawian kwacha": "MWK",
-    "metical": "MZN",
-    "pula": "BWP",
-    # Латинская Америка
-    "peso": "MXN",
-    "cuban peso": "CUP",
-    "peso cubano": "CUP",
-    "argentine peso": "ARS",
-    "chilean peso": "CLP",
-    "colombian peso": "COP",
-    "uruguayan peso": "UYU",
-    "dominican peso": "DOP",
-    "philippine peso": "PHP",
-    "colon": "CRC",
-    "colones": "CRC",
-    "cordoba": "NIO",
-    "guarani": "PYG",
-    "boliviano": "BOB",
-    "sol": "PEN",
-    # Европа (остальные)
-    "forint": "HUF",
-    "zloty": "PLN",
-    "leu": "RON",
-    "lei": "RON",
-    "romanian leu": "RON",
-    "moldovan leu": "MDL",
-    # Динары
-    "dinar": "KWD",
-    "kuwaiti dinar": "KWD",
-    "bahraini dinar": "BHD",
-    "iraqi dinar": "IQD",
-    "jordanian dinar": "JOD",
-    "libyan dinar": "LYD",
-    "tunisian dinar": "TND",
-    "algerian dinar": "DZD",
-    "serbian dinar": "RSD",
-    # Другие
-    "real": "BRL",
-    "manat": "AZN",
-    "turkmenistan manat": "TMT",
-    "dram": "AMD",
-    "georgian lari": "GEL",
-    "uzbek som": "UZS",
-    "kyrgyz som": "KGS",
-    "tajik somoni": "TJS",
-}
 
 # Кэш для сортировки названий по длине (для приоритета фраз)
 _SORTED_NAMES = sorted(POPULAR_NAMES.keys(), key=len, reverse=True)
 
 
-def match_currency_by_root(word: str, currency_names: dict) -> Optional[str]:
-    """Пытается сопоставить слово с валютой по корню."""
-    word_lower = word.lower()
-
-    # Игнорируем короткие слова (предлоги, союзы, числа)
-    if len(word_lower) < 3:
-        return None
-
-    # Явные проверки для частых случаев
+def _check_explicit_currencies(word_lower: str) -> Optional[str]:
+    """Проверяет явные названия валют."""
     if word_lower in ["euro", "euros", "евро"]:
         return "EUR"
     if word_lower in ["бат", "baht", "bat", "bath"]:
@@ -154,7 +23,11 @@ def match_currency_by_root(word: str, currency_names: dict) -> Optional[str]:
         return "USD"
     if word_lower in ["рубль", "ruble", "rubles", "rub"]:
         return "RUB"
+    return None
 
+
+def _check_currency_in_dict(word_lower: str, currency_names: dict) -> Optional[str]:
+    """Проверяет вхождение в словарь."""
     if word_lower in currency_names:
         return currency_names[word_lower]
 
@@ -173,6 +46,21 @@ def match_currency_by_root(word: str, currency_names: dict) -> Optional[str]:
             return code
 
     return None
+
+
+def match_currency_by_root(word: str, currency_names: dict) -> Optional[str]:
+    """Пытается сопоставить слово с валютой по корню."""
+    word_lower = word.lower()
+
+    # Игнорируем короткие слова (предлоги, союзы, числа)
+    if len(word_lower) < 3:
+        return None
+
+    code = _check_explicit_currencies(word_lower)
+    if code:
+        return code
+
+    return _check_currency_in_dict(word_lower, currency_names)
 
 
 def _find_phrases(text_lower: str, used_positions: set) -> list:
@@ -238,31 +126,33 @@ def find_currencies_in_text(text: str) -> list:
     return found
 
 
+def _check_single_currency(
+    cur, text_lower: str, currencies_with_pos: list, pos: int
+) -> bool:
+    """Проверяет, не перекрывается ли валюта с уже найденными."""
+    for used_pos, _ in currencies_with_pos:
+        if abs(pos - used_pos) < 20:
+            return True
+    return False
+
+
 def _check_pycountry_currencies(text_lower: str, currencies_with_pos: list) -> list:
     """Проверяет pycountry для валют, которые не нашли."""
     for cur in pycountry.currencies:
         if cur.name:
             pos = text_lower.find(cur.name.lower())
-            if pos != -1:
-                overlapping = False
-                for used_pos, _ in currencies_with_pos:
-                    if abs(pos - used_pos) < 20:
-                        overlapping = True
-                        break
-                if not overlapping:
-                    currencies_with_pos.append((pos, cur.alpha_3))
+            if pos != -1 and not _check_single_currency(
+                cur, text_lower, currencies_with_pos, pos
+            ):
+                currencies_with_pos.append((pos, cur.alpha_3))
         if hasattr(cur, "alternate_names") and cur.alternate_names:
             for alt_name in cur.alternate_names:
                 if alt_name:
                     pos = text_lower.find(alt_name.lower())
-                    if pos != -1:
-                        overlapping = False
-                        for used_pos, _ in currencies_with_pos:
-                            if abs(pos - used_pos) < 20:
-                                overlapping = True
-                                break
-                        if not overlapping:
-                            currencies_with_pos.append((pos, cur.alpha_3))
+                    if pos != -1 and not _check_single_currency(
+                        cur, text_lower, currencies_with_pos, pos
+                    ):
+                        currencies_with_pos.append((pos, cur.alpha_3))
     return currencies_with_pos
 
 
