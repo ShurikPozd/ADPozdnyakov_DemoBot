@@ -12,7 +12,6 @@ from handlers.stats import record_command
 from keyboards import main_kb, get_cancel_kb
 import pycountry
 import aiohttp
-import json
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -40,11 +39,11 @@ def convert_currency(
 async def get_currency_name(code: str) -> str:
     """Получает русское название валюты по коду из кэша."""
     global _currency_names_cache
-    
+
     # Если кэш пуст, загружаем названия
     if _currency_names_cache is None:
         await load_currency_names()
-    
+
     # Возвращаем из кэша или код, если не найдено
     return _currency_names_cache.get(code, code)
 
@@ -53,7 +52,7 @@ async def load_currency_names() -> None:
     """Загружает названия всех валют в кэш из pycountry."""
     global _currency_names_cache
     _currency_names_cache = {}
-    
+
     try:
         # Пробуем загрузить русские названия из pycountry
         for cur in pycountry.currencies:
@@ -68,7 +67,7 @@ async def load_currency_names() -> None:
                     _currency_names_cache[cur.alpha_3] = cur.name
     except Exception as e:
         logger.warning(f"Не удалось загрузить названия валют из pycountry: {e}")
-    
+
     # Если pycountry не дал русских названий, пробуем через ЦБ РФ (но они будут на английском)
     if not _currency_names_cache:
         try:
@@ -81,7 +80,7 @@ async def load_currency_names() -> None:
                             _currency_names_cache[code] = info["Name"]
         except Exception as e:
             logger.warning(f"Не удалось загрузить названия валют из ЦБ: {e}")
-    
+
     # Фиксим известные названия вручную (чтобы были на русском)
     RUSSIAN_NAMES = {
         "AED": "Дирхам ОАЭ",
@@ -140,11 +139,11 @@ async def load_currency_names() -> None:
         "XDR": "СДР (специальные права заимствования)",
         "ZAR": "Южноафриканский рэнд",
     }
-    
+
     # Обновляем кэш русскими названиями
     for code, name in RUSSIAN_NAMES.items():
         _currency_names_cache[code] = name
-    
+
     logger.info(f"Загружено названий валют: {len(_currency_names_cache)}")
 
 
@@ -153,7 +152,7 @@ async def format_currencies_list(rates: dict) -> str:
     # Убеждаемся, что кэш загружен
     if _currency_names_cache is None:
         await load_currency_names()
-    
+
     lines = []
     for code in sorted(rates.keys()):
         name = _currency_names_cache.get(code, code)
@@ -345,7 +344,7 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
     if from_cur not in rates or to_cur not in rates:
         currencies_list = await format_currencies_list(rates)
         await message.answer(
-            f"❌ Одна из валют не поддерживается.\n\n"
+            f"Одна из валют не поддерживается.\n\n"
             f"Доступные валюты:\n{currencies_list}"
         )
         await state.clear()
@@ -373,14 +372,14 @@ async def get_currency_code(text: str) -> str | None:
     en_text = await translate_text(text, target_lang="en")
     if not en_text:
         return None
-    
+
     # 2. Ищем через match_currency_by_root из гибридного парсера
     from services.currency_parser_hybrid import match_currency_by_root, POPULAR_NAMES
-    
+
     code = match_currency_by_root(en_text, POPULAR_NAMES)
     if code:
         return code
-    
+
     # 3. Пробуем через pycountry
     try:
         for cur in pycountry.currencies:

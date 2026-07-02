@@ -2,7 +2,7 @@
 
 import re
 import logging
-from typing import Optional, Tuple, Set
+from typing import Optional, Tuple
 import pycountry
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,10 @@ POPULAR_NAMES = {
     "singapore dollar": "SGD",
     "dollar": "USD",
     "dollars": "USD",
+    "canadian dollar": "CAD",
+    "canadian dollars": "CAD",
+    "us dollar": "USD",
+    "us dollars": "USD",
     # Фунты
     "quid": "GBP",
     "pound sterling": "GBP",
@@ -136,24 +140,24 @@ _SORTED_NAMES = sorted(POPULAR_NAMES.keys(), key=len, reverse=True)
 def match_currency_by_root(word: str, currency_names: dict) -> Optional[str]:
     """Пытается сопоставить слово с валютой по корню."""
     word_lower = word.lower()
-    
+
     if word_lower in currency_names:
         return currency_names[word_lower]
-    
+
     for name, code in currency_names.items():
         if name in word_lower:
             return code
         if word_lower in name:
             return code
-    
-    singular = re.sub(r'(?:es|s)$', '', word_lower)
+
+    singular = re.sub(r"(?:es|s)$", "", word_lower)
     if singular != word_lower and singular in currency_names:
         return currency_names[singular]
-    
+
     for name, code in currency_names.items():
         if name.startswith(word_lower) or word_lower.startswith(name):
             return code
-    
+
     return None
 
 
@@ -165,7 +169,7 @@ def find_currencies_in_text(text: str) -> list:
     text_lower = text.lower()
     found = []
     used_positions = set()
-    
+
     # 1. Сначала ищем фразы (более длинные названия имеют приоритет)
     for name in _SORTED_NAMES:
         if len(name.split()) < 2:  # Пропускаем одиночные слова
@@ -181,13 +185,12 @@ def find_currencies_in_text(text: str) -> list:
             if not overlapping:
                 found.append((pos, POPULAR_NAMES[name]))
                 used_positions.add((pos, len(name)))
-    
+
     # 2. Теперь ищем одиночные слова
-    words = re.findall(r'\b\w+\b', text_lower)
     word_positions = []
-    for match in re.finditer(r'\b\w+\b', text_lower):
+    for match in re.finditer(r"\b\w+\b", text_lower):
         word_positions.append((match.start(), match.group()))
-    
+
     for pos, word in word_positions:
         # Проверяем, не перекрывается ли с уже найденной фразой
         overlapping = False
@@ -197,12 +200,12 @@ def find_currencies_in_text(text: str) -> list:
                 break
         if overlapping:
             continue
-        
+
         code = match_currency_by_root(word, POPULAR_NAMES)
         if code:
             found.append((pos, code))
             used_positions.add((pos, len(word)))
-    
+
     return found
 
 
@@ -238,10 +241,10 @@ async def parse_with_translate(
         return None
 
     text_lower = en_text.lower()
-    
+
     # Находим все валюты с приоритетом фраз
     currencies_with_pos = find_currencies_in_text(text_lower)
-    
+
     # Проверяем pycountry для тех, что не нашли
     for cur in pycountry.currencies:
         if cur.name:
