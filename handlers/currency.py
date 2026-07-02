@@ -51,28 +51,42 @@ async def load_currency_names() -> None:
     global _currency_names_cache
     _currency_names_cache = {}
 
+    await _load_from_pycountry()
+    await _load_from_cbr_fallback()
+    _add_russian_names()
+
+    logger.info(f"Загружено названий валют: {len(_currency_names_cache)}")
+
+
+async def _load_from_pycountry() -> None:
+    """Загружает названия валют из pycountry."""
     try:
         for cur in pycountry.currencies:
             if cur.alpha_3:
-                try:
-                    _currency_names_cache[cur.alpha_3] = cur.name
-                except Exception:
-                    _currency_names_cache[cur.alpha_3] = cur.name
+                _currency_names_cache[cur.alpha_3] = cur.name
     except Exception as e:
         logger.warning(f"Не удалось загрузить названия валют из pycountry: {e}")
 
-    if not _currency_names_cache:
-        try:
-            url = "https://www.cbr-xml-daily.ru/daily_json.js"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=5) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        for code, info in data["Valute"].items():
-                            _currency_names_cache[code] = info["Name"]
-        except Exception as e:
-            logger.warning(f"Не удалось загрузить названия валют из ЦБ: {e}")
 
+async def _load_from_cbr_fallback() -> None:
+    """Загружает названия валют из ЦБ РФ как fallback."""
+    if _currency_names_cache:
+        return  # Если pycountry загрузился успешно, не перезаписываем
+
+    try:
+        url = "https://www.cbr-xml-daily.ru/daily_json.js"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=5) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    for code, info in data["Valute"].items():
+                        _currency_names_cache[code] = info["Name"]
+    except Exception as e:
+        logger.warning(f"Не удалось загрузить названия валют из ЦБ: {e}")
+
+
+def _add_russian_names() -> None:
+    """Добавляет русские названия валют."""
     RUSSIAN_NAMES = {
         "AED": "Дирхам ОАЭ",
         "AMD": "Армянский драм",
