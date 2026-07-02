@@ -56,10 +56,8 @@ POPULAR_NAMES = {
     "kenyan shilling": "KES",
     "tanzanian shilling": "TZS",
     "ugandan shilling": "UGX",
-    "somalian shilling": "SOS",
     "kwacha": "MWK",
     "malawian kwacha": "MWK",
-    "zambian kwacha": "ZMW",
     "metical": "MZN",
     "pula": "BWP",
     # Латинская Америка
@@ -86,11 +84,8 @@ POPULAR_NAMES = {
     "norwegian krone": "NOK",
     "swedish krona": "SEK",
     "danish krone": "DKK",
-    "icelandic krona": "ISK",
     "forint": "HUF",
     "zloty": "PLN",
-    "lev": "BGN",
-    "kuna": "HRK",
     "leu": "RON",
     "romanian leu": "RON",
     # Динары
@@ -223,6 +218,7 @@ async def parse_with_translate(
             unique.append((pos, code))
 
     if len(unique) < 2:
+        logger.debug("Found less than 2 unique currencies")
         return None
 
     from_currency = unique[0][1]
