@@ -10,6 +10,7 @@ from services.translate_api import translate_text
 import logging
 from handlers.stats import record_command
 from keyboards import main_kb, get_cancel_kb
+import pycountry
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -21,7 +22,9 @@ class CurrencyStates(StatesGroup):
     waiting_for_to_currency = State()
 
 
-def convert_currency(amount: float, from_cur: str, to_cur: str, rates: dict) -> float | None:
+def convert_currency(
+    amount: float, from_cur: str, to_cur: str, rates: dict
+) -> float | None:
     if from_cur not in rates or to_cur not in rates:
         return None
     rub_amount = amount * rates[from_cur]
@@ -34,22 +37,32 @@ async def get_currency_code(text: str) -> str | None:
     text = text.strip().lower()
     if len(text) == 3 and text.isalpha():
         return text.upper()
+
+    # 1. Переводим название на английский
+    en_text = await translate_text(text, target_lang="en")
+    if not en_text:
+        return None
     
-    # Ищем через pycountry
+    # 2. Ищем через match_currency_by_root из гибридного парсера
+    from services.currency_parser_hybrid import match_currency_by_root, POPULAR_NAMES
+    
+    code = match_currency_by_root(en_text, POPULAR_NAMES)
+    if code:
+        return code
+    
+    # 3. Пробуем через pycountry
     try:
-        currency = pycountry.currencies.get(name=text.title())
-        if currency:
-            return currency.alpha_3
+        for cur in pycountry.currencies:
+            if cur.name and cur.name.lower() == en_text.lower():
+                return cur.alpha_3
+            if hasattr(cur, "alternate_names") and cur.alternate_names:
+                for alt_name in cur.alternate_names:
+                    if alt_name and alt_name.lower() == en_text.lower():
+                        return cur.alpha_3
     except (KeyError, AttributeError):
         pass
-    
-    # Ищем через словарь популярных названий
-    from services.currency_parser_hybrid import POPULAR_NAMES
-    if text in POPULAR_NAMES:
-        return POPULAR_NAMES[text]
-    
-    return None
 
+    return None
 
 async def try_parse_and_convert(message: types.Message, state: FSMContext) -> bool:
     """Пытается распарсить и конвертировать запрос."""
@@ -114,7 +127,9 @@ async def process_amount(message: types.Message, state: FSMContext) -> None:
     """Обрабатывает ввод суммы или полный запрос."""
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
 
     if await try_parse_and_convert(message, state):
@@ -130,7 +145,9 @@ async def process_amount(message: types.Message, state: FSMContext) -> None:
             reply_markup=get_cancel_kb(),
         )
     except ValueError:
-        logger.warning(f"User {message.from_user.id} entered invalid amount: {message.text}")
+        logger.warning(
+            f"User {message.from_user.id} entered invalid amount: {message.text}"
+        )
         await message.answer(
             "Ошибка: введите число или полный запрос (например, 100 долларов в евро).",
             reply_markup=get_cancel_kb(),
@@ -142,7 +159,9 @@ async def process_from_currency(message: types.Message, state: FSMContext) -> No
     """Обрабатывает ввод исходной валюты или полный запрос."""
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
 
     if await try_parse_and_convert(message, state):
@@ -172,7 +191,9 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
     """Обрабатывает ввод целевой валюты или полный запрос."""
     if message.text.startswith("/"):
         await state.clear()
-        await message.answer("Диалог отменён. Отправьте команду заново.", reply_markup=main_kb)
+        await message.answer(
+            "Диалог отменён. Отправьте команду заново.", reply_markup=main_kb
+        )
         return
 
     if await try_parse_and_convert(message, state):
@@ -214,6 +235,8 @@ async def process_to_currency(message: types.Message, state: FSMContext) -> None
         f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)",
         reply_markup=main_kb,
     )
-    logger.info(f"User {message.from_user.id} conversion result: {amount} {from_cur} = {result} {to_cur}")
+    logger.info(
+        f"User {message.from_user.id} conversion result: {amount} {from_cur} = {result} {to_cur}"
+    )
     record_command(message.from_user.id, "/currency")
     await state.clear()

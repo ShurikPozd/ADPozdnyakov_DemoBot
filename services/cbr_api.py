@@ -17,7 +17,11 @@ async def get_cbr_rates() -> dict | None:
     global _cached_rates, _cache_time
     now = time.time()
 
-    if _cached_rates is not None and _cache_time is not None and (now - _cache_time) < CACHE_TTL:
+    if (
+        _cached_rates is not None
+        and _cache_time is not None
+        and (now - _cache_time) < CACHE_TTL
+    ):
         logger.debug("Возвращаем курсы валют из кэша")
         return _cached_rates
 
