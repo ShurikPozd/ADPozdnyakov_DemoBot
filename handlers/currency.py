@@ -38,12 +38,9 @@ def convert_currency(
 
 async def get_currency_name(code: str) -> str:
     """Получает русское название валюты по коду из кэша."""
-    global _currency_names_cache
-
     # Если кэш пуст, загружаем названия
     if _currency_names_cache is None:
         await load_currency_names()
-
     # Возвращаем из кэша или код, если не найдено
     return _currency_names_cache.get(code, code)
 
@@ -373,14 +370,17 @@ async def get_currency_code(text: str) -> str | None:
     if not en_text:
         return None
 
-    # 2. Ищем через match_currency_by_root из гибридного парсера
-    from services.currency_parser_hybrid import match_currency_by_root, POPULAR_NAMES
-
-    code = match_currency_by_root(en_text, POPULAR_NAMES)
+    # 2. Ищем через match_currency_by_root
+    code = await _find_currency_code(en_text)
     if code:
         return code
 
     # 3. Пробуем через pycountry
+    return _find_currency_in_pycountry(en_text)
+
+
+def _find_currency_in_pycountry(en_text: str) -> str | None:
+    """Ищет валюту в pycountry."""
     try:
         for cur in pycountry.currencies:
             if cur.name and cur.name.lower() == en_text.lower():
@@ -391,5 +391,11 @@ async def get_currency_code(text: str) -> str | None:
                         return cur.alpha_3
     except (KeyError, AttributeError):
         pass
-
     return None
+
+
+async def _find_currency_code(en_text: str) -> str | None:
+    """Ищет валюту через match_currency_by_root."""
+    from services.currency_parser_hybrid import match_currency_by_root, POPULAR_NAMES
+
+    return match_currency_by_root(en_text, POPULAR_NAMES)

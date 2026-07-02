@@ -141,6 +141,20 @@ def match_currency_by_root(word: str, currency_names: dict) -> Optional[str]:
     """Пытается сопоставить слово с валютой по корню."""
     word_lower = word.lower()
 
+    # Игнорируем короткие слова (предлоги, союзы, числа)
+    if len(word_lower) < 3:
+        return None
+
+    # Явные проверки для частых случаев
+    if word_lower in ["euro", "euros", "евро"]:
+        return "EUR"
+    if word_lower in ["бат", "baht", "bat", "bath"]:
+        return "THB"
+    if word_lower in ["доллар", "dollar", "dollars", "usd"]:
+        return "USD"
+    if word_lower in ["рубль", "ruble", "rubles", "rub"]:
+        return "RUB"
+
     if word_lower in currency_names:
         return currency_names[word_lower]
 
@@ -161,22 +175,14 @@ def match_currency_by_root(word: str, currency_names: dict) -> Optional[str]:
     return None
 
 
-def find_currencies_in_text(text: str) -> list:
-    """
-    Находит все валюты в тексте с приоритетом фраз над отдельными словами.
-    Возвращает список (позиция, код_валюты).
-    """
-    text_lower = text.lower()
+def _find_phrases(text_lower: str, used_positions: set) -> list:
+    """Находит фразы из 2+ слов в тексте."""
     found = []
-    used_positions = set()
-
-    # 1. Сначала ищем фразы (более длинные названия имеют приоритет)
     for name in _SORTED_NAMES:
-        if len(name.split()) < 2:  # Пропускаем одиночные слова
+        if len(name.split()) < 2:
             continue
         pos = text_lower.find(name)
         if pos != -1:
-            # Проверяем, не перекрывается ли с уже найденным
             overlapping = False
             for used_pos, used_len in used_positions:
                 if pos < used_pos + used_len and used_pos < pos + len(name):
@@ -185,14 +191,19 @@ def find_currencies_in_text(text: str) -> list:
             if not overlapping:
                 found.append((pos, POPULAR_NAMES[name]))
                 used_positions.add((pos, len(name)))
+    return found
 
-    # 2. Теперь ищем одиночные слова
+
+def _find_single_words(text_lower: str, used_positions: set) -> list:
+    """Находит одиночные слова в тексте."""
+    found = []
     word_positions = []
     for match in re.finditer(r"\b\w+\b", text_lower):
         word_positions.append((match.start(), match.group()))
 
+    logger.debug(f"_find_single_words: words={word_positions}")
+
     for pos, word in word_positions:
-        # Проверяем, не перекрывается ли с уже найденной фразой
         overlapping = False
         for used_pos, used_len in used_positions:
             if pos < used_pos + used_len and used_pos < pos + len(word):
@@ -202,11 +213,85 @@ def find_currencies_in_text(text: str) -> list:
             continue
 
         code = match_currency_by_root(word, POPULAR_NAMES)
+        logger.debug(f"_find_single_words: word='{word}', code={code}")
         if code:
             found.append((pos, code))
             used_positions.add((pos, len(word)))
+    return found
+
+
+def find_currencies_in_text(text: str) -> list:
+    """
+    Находит все валюты в тексте с приоритетом фраз над отдельными словами.
+    Возвращает список (позиция, код_валюты).
+    """
+    text_lower = text.lower()
+    used_positions = set()
+
+    logger.debug(f"find_currencies_in_text: text='{text_lower}'")
+
+    found = _find_phrases(text_lower, used_positions)
+    found.extend(_find_single_words(text_lower, used_positions))
+
+    logger.debug(f"find_currencies_in_text: found={found}")
 
     return found
+
+
+def _check_pycountry_currencies(text_lower: str, currencies_with_pos: list) -> list:
+    """Проверяет pycountry для валют, которые не нашли."""
+    for cur in pycountry.currencies:
+        if cur.name:
+            pos = text_lower.find(cur.name.lower())
+            if pos != -1:
+                overlapping = False
+                for used_pos, _ in currencies_with_pos:
+                    if abs(pos - used_pos) < 20:
+                        overlapping = True
+                        break
+                if not overlapping:
+                    currencies_with_pos.append((pos, cur.alpha_3))
+        if hasattr(cur, "alternate_names") and cur.alternate_names:
+            for alt_name in cur.alternate_names:
+                if alt_name:
+                    pos = text_lower.find(alt_name.lower())
+                    if pos != -1:
+                        overlapping = False
+                        for used_pos, _ in currencies_with_pos:
+                            if abs(pos - used_pos) < 20:
+                                overlapping = True
+                                break
+                        if not overlapping:
+                            currencies_with_pos.append((pos, cur.alpha_3))
+    return currencies_with_pos
+
+
+def _get_unique_currencies(currencies_with_pos: list) -> list:
+    """Сортирует и убирает дубликаты валют."""
+    currencies_with_pos.sort(key=lambda x: x[0])
+    unique = []
+    seen = set()
+    for pos, code in currencies_with_pos:
+        if code not in seen:
+            seen.add(code)
+            unique.append((pos, code))
+    return unique
+
+
+def _determine_from_to(unique: list, text_lower: str) -> Tuple[str, str]:
+    """Определяет исходную и целевую валюты."""
+    from_currency = unique[0][1]
+    to_currency = unique[1][1]
+
+    match = re.search(r"(?:in|to|into)\s+(\w+)", text_lower)
+    if match:
+        target_word = match.group(1)
+        target_pos = text_lower.find(target_word)
+        from_pos = unique[0][0]
+        if target_pos < from_pos:
+            from_currency, to_currency = to_currency, from_currency
+
+    return from_currency, to_currency
 
 
 def get_currency_code(currency_name: str) -> Optional[str]:
@@ -241,65 +326,15 @@ async def parse_with_translate(
         return None
 
     text_lower = en_text.lower()
-
-    # Находим все валюты с приоритетом фраз
     currencies_with_pos = find_currencies_in_text(text_lower)
-
-    # Проверяем pycountry для тех, что не нашли
-    for cur in pycountry.currencies:
-        if cur.name:
-            pos = text_lower.find(cur.name.lower())
-            if pos != -1:
-                # Проверяем, не перекрывается ли
-                overlapping = False
-                for used_pos, _ in currencies_with_pos:
-                    if abs(pos - used_pos) < 20:  # Примерное расстояние
-                        overlapping = True
-                        break
-                if not overlapping:
-                    currencies_with_pos.append((pos, cur.alpha_3))
-        if hasattr(cur, "alternate_names") and cur.alternate_names:
-            for alt_name in cur.alternate_names:
-                if alt_name:
-                    pos = text_lower.find(alt_name.lower())
-                    if pos != -1:
-                        overlapping = False
-                        for used_pos, _ in currencies_with_pos:
-                            if abs(pos - used_pos) < 20:
-                                overlapping = True
-                                break
-                        if not overlapping:
-                            currencies_with_pos.append((pos, cur.alpha_3))
-
-    # Сортируем по позиции и убираем дубликаты
-    currencies_with_pos.sort(key=lambda x: x[0])
-    unique = []
-    seen = set()
-    for pos, code in currencies_with_pos:
-        if code not in seen:
-            seen.add(code)
-            unique.append((pos, code))
-
-    logger.debug(f"Currencies with pos: {currencies_with_pos}")
-    logger.debug(f"Unique: {unique}")
+    currencies_with_pos = _check_pycountry_currencies(text_lower, currencies_with_pos)
+    unique = _get_unique_currencies(currencies_with_pos)
 
     if len(unique) < 2:
         logger.debug("Found less than 2 unique currencies")
         return None
 
-    from_currency = unique[0][1]
-    to_currency = unique[1][1]
-
-    # Проверяем по предлогу
-    match = re.search(r"(?:in|to|into)\s+(\w+)", text_lower)
-    if match:
-        target_word = match.group(1)
-        target_pos = text_lower.find(target_word)
-        from_pos = unique[0][0]
-
-        if target_pos < from_pos:
-            from_currency, to_currency = to_currency, from_currency
-
+    from_currency, to_currency = _determine_from_to(unique, text_lower)
     return amount, from_currency, to_currency
 
 
