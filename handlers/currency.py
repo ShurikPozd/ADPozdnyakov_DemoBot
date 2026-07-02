@@ -9,7 +9,11 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from services.cbr_api import get_cbr_rates
-from services.currency_parser import parse_currency_request
+from services.currency_parser import parse_currency_request  # старый (Natasha)
+from services.currency_parser_hybrid import (
+    parse_currency_request_hybrid,
+)  # новый (гибридный)
+from services.translate_api import translate_text  # используем существующий переводчик
 import logging
 from handlers.stats import record_command
 from keyboards import main_kb, get_cancel_kb
@@ -83,12 +87,23 @@ async def try_parse_and_convert(message: types.Message, state: FSMContext) -> bo
         await state.clear()
         return True  # считаем, что обработали (с ошибкой)
 
-    parsed = parse_currency_request(text, names)
+    # ГИБРИДНЫЙ ПАРСЕР (перевод + английское распознавание) — ПЕРВЫЙ
+    parsed = await parse_currency_request_hybrid(text, translate_text)
+    if parsed:
+        amount, from_cur, to_cur = parsed
+        logger.info(f"Parsed: {amount} {from_cur} -> {to_cur}")
+
+    # Если гибридный парсер не сработал — используем Natasha
+    if parsed is None:
+        logger.debug("Hybrid parser failed, using Natasha fallback")
+        parsed = parse_currency_request(text, names)
+
     if parsed is None:
         return False
 
     amount, from_cur, to_cur = parsed
     result = convert_currency(amount, from_cur, to_cur, rates)
+
     if result is None:
         await message.answer(
             f"Одна из валют не поддерживается. Доступны: {', '.join(rates.keys())}"
@@ -96,8 +111,10 @@ async def try_parse_and_convert(message: types.Message, state: FSMContext) -> bo
         await state.clear()
         return True
 
+    # Определяем, какой парсер сработал
+    source = "гибридный (перевод + NER)" if parsed else "Natasha"
     await message.answer(
-        f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)",
+        f"{amount} {from_cur} = {result} {to_cur}\n(по курсу ЦБ РФ)\n\nРаспознано через: {source}",
         reply_markup=main_kb,
     )
     record_command(message.from_user.id, "/currency")

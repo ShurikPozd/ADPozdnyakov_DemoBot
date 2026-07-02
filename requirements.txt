@@ -8,3 +8,4 @@ flask
 natasha
 pymorphy2-dicts-ru
 setuptools<81
+pycountry
